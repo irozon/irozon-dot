@@ -16,8 +16,9 @@ The screenshots use sample values, not live account readings.
 
 ## Parts and wiring
 
-- ESP32-C3 Super Mini with 4 MB flash
-- 1.28-inch, 240×240 GC9A01 SPI round display
+- [ESP32-C3 Super Mini](https://www.aliexpress.us/item/3256807018729495.html)
+  with 4 MB flash
+- [1.28-inch, 240×240 GC9A01 SPI round display](https://pl.aliexpress.com/item/1005004482028005.html)
 - Seven jumper wires and a USB data cable
 - Optional 3D-printed enclosure
 
@@ -49,9 +50,10 @@ them when closing the enclosure. Check the wiring before reconnecting USB.
 
 1. Install [Codex CLI](https://developers.openai.com/codex/cli). In PowerShell,
    run `codex login` and finish sign-in in the browser. Check it with
-   `codex login status`, using the same Windows account that will run Irozon Dot.
-2. Download and extract the Windows companion, then start `IrozonDot.exe`.
-   Python is not required. The companion opens its settings page in your browser.
+   `codex login status`, using the Windows account that will run Irozon Dot.
+2. Download the Windows ZIP asset from a project GitHub release and extract the
+   complete archive. Run `IrozonDot.exe`; Python is not required. Its settings
+   page opens in your browser.
 3. Discover the device or enter its IP address, pair it securely, and run
    **Test connection**. Choose one of the four display modes and optionally set
    a heading (up to 18 characters; an empty heading hides the title).
@@ -98,9 +100,12 @@ ready to configure Wi-Fi again.
 blanks the image and sleeps the panel, but cannot switch off its LEDs. The
 [hardware guide](docs/hardware.md#backlight) explains the verified limitation.
 
-On the owner's tested unit, a BOOT hold did not wake the display from standby,
-although HTTP and Home Assistant wake worked. The cause is unresolved; see
-[troubleshooting](docs/troubleshooting.md) for the current workaround.
+The previously tested firmware image failed to wake from BOOT standby, although
+HTTP and Home Assistant wake worked. Current source adds GPIO9 level sampling
+to recover missed interrupt edges; the fix passes timing/state-machine tests and
+both builds, but still needs physical confirmation after flashing. Until then,
+use HTTP or Home Assistant to wake the tested unit. See
+[troubleshooting](docs/troubleshooting.md).
 
 ## License
 

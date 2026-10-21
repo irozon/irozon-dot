@@ -2,9 +2,10 @@
 
 The firmware provides four display modes, adaptive or intentionally empty
 headings, Green Dashboard face animation, BOOT controls, USB pairing and the
-Home Assistant HTTP controls. The current owner-tested device has a known BOOT
-hold-to-wake failure; HTTP and Home Assistant wake work. See
-[troubleshooting](troubleshooting.md).
+Home Assistant HTTP controls. The current source samples GPIO9 on every main
+loop in addition to processing ISR timestamps. The regression covers button
+standby then wake and missed-edge recovery. A previously flashed image failed
+BOOT wake; physical confirmation of the source fix still requires flashing it.
 
 Install PlatformIO Core and run from the repository root:
 
@@ -53,9 +54,10 @@ compiled HA source allowlist remains in force after USB enrollment.
 The gesture table in the README is classified on debounced release, including
 the two- and eight-second thresholds. Releasing a long hold performs only its
 one action. A button held during application startup is ignored until released;
-holding BOOT across reset still invokes the ROM bootloader. Lost ISR edges
-discard a pending gesture and require a stable release. HTTP waits may defer
-visible response, but queued edge timestamps preserve duration classification.
+holding BOOT across reset still invokes the ROM bootloader. GPIO9 sampling
+reconciles the pin with its interrupt events; ISR queue overflow discards the
+pending gesture and waits for a stable release. HTTP waits may defer visible
+response, but queued edge timestamps preserve duration classification.
 
 Standby and mode use the unchanged `irozon-ui` namespace. New pairing uses its
 own `irozon-link` namespace. Wi-Fi reset calls WiFiManager's Wi-Fi credential

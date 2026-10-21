@@ -63,6 +63,8 @@ button::Events button::poll() {
     if (!available) break;
     collect(logic.edge(event.at, event.down));
   }
-  collect(logic.advance(millis()));
+  // GPIO9 is sampled even when the LCD panel is asleep. This also recovers a
+  // missed interrupt edge; ordinary ISR events retain their precise timestamps.
+  collect(logic.sample(millis(), digitalRead(config::kBootPin) == LOW));
   return result;
 }

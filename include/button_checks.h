@@ -56,10 +56,42 @@ constexpr bool cancellation() {
   logic.edge(41000, true); logic.edge(41100, false);
   return logic.advance(41140) == Short;
 }
+constexpr uint8_t sampledRelease(Logic& logic, uint32_t start, uint32_t duration) {
+  if (logic.sample(start, true) != None ||
+      logic.sample(start + duration, false) != None) return 255;
+  return logic.sample(start + duration + kDebounceMs, false);
+}
+constexpr bool standbyThenWake() {
+  Logic logic;
+  bool displayOn = true;
+  uint8_t modeChanges = 0;
+  const auto standby = sampledRelease(logic, 100, kPowerHoldMs);
+  if (standby == Short) ++modeChanges;
+  if (standby != Power) return false;
+  displayOn = !displayOn;
+  if (displayOn) return false;
+
+  // The same production state machine must accept a hold while display power
+  // is OFF. No display-state gate is part of gesture classification.
+  const auto wake = sampledRelease(logic, 5000, kPowerHoldMs + 500);
+  if (wake == Short) ++modeChanges;
+  if (wake != Power) return false;
+  displayOn = !displayOn;
+  return displayOn && modeChanges == 0;
+}
+constexpr bool sampledPinRecoversMissedEdges() {
+  Logic logic;
+  // A level sample wins a race with the same transition still in the ISR queue.
+  if (logic.sample(101, true) != None || logic.edge(100, true) != None) return false;
+  if (logic.sample(2101, false) != None) return false;
+  return logic.sample(2141, false) == Power;
+}
 static_assert(boundaries(), "BOOT timing, mutually exclusive gestures and single release event");
 static_assert(heldAndRearmed(), "No action while held; reset only after release; re-arm");
 static_assert(bounce(), "BOOT press/release bounce must not invent a tap or Wi-Fi reset");
 static_assert(cancellation(), "Startup-held and overflowed gestures must be discarded");
+static_assert(standbyThenWake(), "Physical BOOT hold must toggle ON to OFF to ON without mode changes");
+static_assert(sampledPinRecoversMissedEdges(), "Pin sampling recovers missed/racing GPIO9 interrupts");
 static_assert(released(UINT32_MAX - 1000, 120) == Short);
 static_assert(released(UINT32_MAX - 1000, 2000) == Power);
 static_assert(released(UINT32_MAX - 1000, 7999) == Power);

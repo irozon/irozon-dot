@@ -76,6 +76,7 @@ def main():
     shutil.copyfile(ROOT / 'SECURITY.md', path.parent / 'SECURITY.md')
     shutil.copyfile(ROOT / 'companion/install-executable.ps1', path.parent / 'install-executable.ps1')
     shutil.copytree(ROOT / 'licenses', path.parent / 'licenses', dirs_exist_ok=True)
+    shutil.rmtree(path.parent / 'docs', ignore_errors=True)
     shutil.copytree(ROOT / 'docs', path.parent / 'docs', dirs_exist_ok=True)
     (path.parent / 'home-assistant').mkdir(exist_ok=True)
     shutil.copyfile(ROOT / 'home-assistant/irozon-dot.example.yaml',

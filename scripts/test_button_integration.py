@@ -49,6 +49,14 @@ class ButtonIntegrationChecks(unittest.TestCase):
         self.assertIn('#include "button_checks.h"', source)
         self.assertIn('if (gesture.taps)', (ROOT / 'src/main.cpp').read_text())
 
+    def test_button_pin_is_reconciled_during_every_poll(self):
+        source = (ROOT / 'src/button.cpp').read_text()
+        self.assertIn('logic.sample(millis(), digitalRead(config::kBootPin) == LOW)', source)
+        self.assertIn('constexpr uint8_t sample(uint32_t now, bool down)',
+                      (ROOT / 'include/button_logic.h').read_text())
+        self.assertIn('static_assert(standbyThenWake()',
+                      (ROOT / 'include/button_checks.h').read_text())
+
 
 if __name__ == '__main__':
     unittest.main()

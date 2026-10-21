@@ -33,9 +33,18 @@ struct Logic {
     return duration >= kResetHoldMs ? Reset : duration >= kPowerHoldMs ? Power : Short;
   }
   constexpr uint8_t edge(uint32_t now, bool down) {
+    // The main-loop level sample can race an already queued ISR edge. Ignore
+    // the duplicate without advancing the clock backwards to that older edge.
+    if (down == raw) return None;
     const auto result = advance(now);
-    if (down != raw) { raw = down; changed = now; }
+    raw = down;
+    changed = now;
     return result;
+  }
+  // Reconcile the interrupt stream with the pin level during every main-loop
+  // poll. ISR timestamps still preserve gesture duration across blocking work.
+  constexpr uint8_t sample(uint32_t now, bool down) {
+    return down == raw ? advance(now) : edge(now, down);
   }
 };
 }  // namespace button
