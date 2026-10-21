@@ -7,6 +7,8 @@ Super Mini, a 240×240 GC9A01 display and a Windows Python companion.
 available locally. Nothing has been published. The repaired Windows executable now connects to the development device with
 existing credentials. USB enrollment and final physical acceptance retain the
 limits documented in the integration report. See [verified behavior and release gates](docs/validation.md).
+The [current readiness review](docs/release-readiness.md) records candidate versus
+installed versions and the remaining stable-release blockers.
 
 ![Green, Blue, Orange and Classic display modes](docs/display-modes.png)
 

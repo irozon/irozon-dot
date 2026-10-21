@@ -100,7 +100,14 @@ def audit_sources(root, markers):
 
 
 def audit_git(root, markers):
-    types, sensitive = Counter(), Counter()
+    types, sensitive, reachable_findings = Counter(), Counter(), Counter()
+    reachable, attribution = set(), set()
+    for row in git(root, 'rev-list', '--objects', '--all').decode().splitlines():
+        oid, _, name = row.partition(' ')
+        reachable.add(oid)
+        if name.startswith('licenses/'):
+            attribution.add(oid)
+    reachable.update(git(root, 'for-each-ref', '--format=%(objectname)').decode().splitlines())
     for row in git(root, 'cat-file', '--batch-all-objects', '--batch-check=%(objectname) %(objecttype)').decode().splitlines():
         oid, kind = row.split()
         types[kind] += 1
@@ -108,8 +115,12 @@ def audit_git(root, markers):
             data = git(root, 'cat-file', kind, oid)
             for finding in scan(data, markers):
                 sensitive[finding] += 1
+            if oid in reachable:
+                for finding in scan(data, markers, oid in attribution):
+                    reachable_findings[finding] += 1
     commits = git(root, 'rev-list', '--all', '--count').decode().strip()
     return {'objects': dict(types), 'all_object_review_counts': dict(sensitive),
+            'reachable_review_counts': dict(reachable_findings),
             'reachable_commits': int(commits or 0),
             'remote_count': len(git(root, 'remote').splitlines()),
             'branch_count': len(git(root, 'for-each-ref', 'refs/heads', 'refs/remotes').splitlines()),
@@ -131,7 +142,7 @@ def main():
     output.mkdir(exist_ok=True)
     (output / 'SOURCE-AUDIT.json').write_text(json.dumps(report, indent=2) + '\n')
     print(json.dumps(report, indent=2))  # Filenames/categories/counts only, never matched values.
-    if findings:
+    if findings or report['git']['reachable_review_counts']:
         raise SystemExit('Release source audit failed; no archive created')
     if args.export:
         version = report['version']
@@ -156,7 +167,7 @@ def main():
             assert hashlib.sha256(executable.read_bytes()).hexdigest() == manifest['sha256']
             top = {'IrozonDot.exe', 'BUILD-MANIFEST.json', 'SHA256SUMS.txt',
                    'LICENSE', 'NOTICE', 'README.md', 'THIRD-PARTY-NOTICES.txt',
-                   'THIRD_PARTY_NOTICES.md', 'SECURITY.md'}
+                   'THIRD_PARTY_NOTICES.md', 'SECURITY.md', 'install-executable.ps1'}
             windows_archive = output / f'irozon-dot-{version}-windows-x64.zip'
             with zipfile.ZipFile(windows_archive, 'w', zipfile.ZIP_DEFLATED) as bundle:
                 for path in sorted(windows.rglob('*')):

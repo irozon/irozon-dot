@@ -22,11 +22,14 @@ Component provenance and required acknowledgment are recorded in
 from the exact installed pins, not inferred from badges.
 
 GNU FreeFont publishes GPL-3.0-or-later with an embedding exception for documents.
-Our converted bitmap fonts are compiled into firmware; that exception must not
-be assumed to exempt software redistribution. The upstream LovyanGFX GFX font
-headers lack enough per-font provenance to settle this automatically. The
-firmware/font licensing decision and complete corresponding-source/relinking
-materials are an **open gate for firmware binary redistribution**. Do not ship
+Its FAQ explicitly distinguishes documents from software incorporating font elements:
+distribution of the latter requires GPL-compatible licensing of the combined work.
+Our converted bitmap fonts are compiled into firmware; the document exception does
+not clear this use. LovyanGFX's permissive library license does not establish a
+separate permission from the font authors. A verified font permission or a compliant
+combined-work licensing plan, plus complete framework corresponding-source/relinking
+materials and an actual-linked SDK component inventory, remain an **open gate for
+firmware binary redistribution**. Project MIT notices alone do not resolve it. Do not ship
 locally built firmware.bin, ELF, bootloader images or merged flash bundles as
 part of this RC. Source-only release does not vendor those font/framework files;
 developers fetch the pinned dependencies separately. No fonts were changed to
@@ -36,7 +39,8 @@ Sources:
 [LovyanGFX 1.2.7](https://github.com/lovyan03/LovyanGFX/tree/1.2.7),
 [Arduino LGPL text](https://github.com/espressif/arduino-esp32/blob/2.0.14/LICENSE.md),
 [ESP-IDF 4.4.6](https://github.com/espressif/esp-idf/tree/v4.4.6),
-[GNU FreeFont license and exception](https://www.gnu.org/software/freefont/license.html).
+[GNU FreeFont license and exception](https://www.gnu.org/software/freefont/license.html),
+[GNU FreeFont FAQ on incorporation into software](https://www.gnu.org/software/freefont/FAQ.html).
 
 ## Windows executable
 

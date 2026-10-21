@@ -2,6 +2,8 @@
 
 This is **1.0.0-rc.2**, repaired and tested locally, not a public v1.0 acceptance claim.
 See [actual Windows/device results](windows-integration-results.md).
+The [current readiness review](release-readiness.md) distinguishes the running
+installation from the newer candidate and records the remaining release blockers.
 
 | Area | Evidence / limit |
 | --- | --- |
@@ -19,7 +21,7 @@ See [actual Windows/device results](windows-integration-results.md).
 
 ## Reproduce
 
-Local commit validation on 2026-10-21 passed **32 companion tests and 16 repository
+Local release validation on 2026-10-21 passed **32 companion tests and 19 repository
 checks**, plus the settings JavaScript check and complete bitmap preview checks.
 Both current firmware environments build successfully:
 
@@ -37,7 +39,7 @@ size are in BUILD-MANIFEST.json (about 9 MiB).
 The four resting mode previews match fresh rendering byte-for-byte. The native
 240 by 240 face GIF preserves text pixels throughout its ten-second loop and
 returns to its exact original frame.
-The source-only staged checkout also passes all 48 Python tests, the JavaScript
+The source-only exported checkout also passes all 51 Python tests, the JavaScript
 check and preview rendering; both firmware environments build without private
 headers or local configuration. The latest frozen executable candidate passes
 its isolated lifecycle/privacy checks without changing the running installation.

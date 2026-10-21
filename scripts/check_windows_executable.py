@@ -96,8 +96,20 @@ def main():
             assert state['config']['pairing_key_configured']
             assert not state['paired']  # No LAN addresses, therefore no LAN server/provider.
             write_headers = {'Cookie': cookie, 'Content-Type': 'application/json', 'X-Irozon-CSRF': state['csrf']}
-            assert request('POST', '/api/exit', {}, write_headers)[0] == 200
+            assert request('POST', '/api/save', {'heading': '  '}, write_headers)[0] == 200
+            assert json.loads(config.read_text())['heading'] == ''
+            empty_stopper = launch('stop')
+            assert empty_stopper.wait(timeout=15) == 0
             assert replacement.wait(timeout=15) == 0
+            empty_owner = launch()
+            _, headers, _ = wait_ready(empty_owner)
+            cookie = headers['Set-Cookie'].split(';')[0]
+            state = json.loads(request('GET', '/api/state', headers={'Cookie': cookie})[2])
+            assert state['config']['heading'] == ''
+            write_headers = {'Cookie': cookie, 'Content-Type': 'application/json', 'X-Irozon-CSRF': state['csrf']}
+            print('PASS: packaged explicitly empty heading survives save, process restart and settings reload')
+            assert request('POST', '/api/exit', {}, write_headers)[0] == 200
+            assert empty_owner.wait(timeout=15) == 0
             print('PASS: Stop, restart, persisted settings and browser Exit')
         finally:
             # Stop only the temporary config's mutex/event scope, never production.

@@ -1,9 +1,12 @@
 # Build, flash and pair firmware
 
-The release candidate source includes final BOOT gestures, USB pairing and a
-custom heading. The owner reports current firmware installed and the API advertises heading/USB
-capabilities. No flash was performed during the Windows repair. Its Home Assistant
-setup remains in place; see windows-integration-results.md for physical acceptance.
+The release candidate source includes synchronized Green Dashboard blinking/mouth
+animation, adaptive and explicitly empty headings, four display modes, final BOOT
+gestures, USB pairing and the existing Home Assistant controls. The live API advertises
+heading/USB capabilities but exposes no build identifier: it cannot prove that all
+latest source changes are flashed. No flash was performed during release validation.
+Home Assistant remains in place; see windows-integration-results.md for earlier
+physical acceptance and the checks below for an approved firmware update.
 
 Install PlatformIO Core and run from the repository root:
 
@@ -36,7 +39,10 @@ preserving Wi-Fi/mode/power/link NVS, and keep the existing partition layout.
    before application restart. Then use Test connection. mDNS discovery is best
    effort; this firmware does not advertise an mDNS service, so use manual IP.
 4. Optionally choose a heading (18 safe ASCII characters) and display mode.
-   Heading appears on the next authenticated usage fetch. Blank retains IROZON DOT.
+   The unconfigured default is `IROZON DOT`. Saving an empty or whitespace-only
+   heading intentionally displays no heading. Other input is trimmed. The heading
+   arrives on the next authenticated usage fetch and is then persisted on the device,
+   including an intentionally empty value. Existing settings are not reset on update.
 
 Fresh public source builds without private headers and waits for USB pairing;
 it must not contain shared default credentials. Existing builds with private

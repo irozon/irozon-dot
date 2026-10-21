@@ -15,9 +15,13 @@ BUILD-MANIFEST.json. See [validation](validation.md) for acceptance coverage.
 1. Install and sign in to the external [Codex CLI](https://developers.openai.com/codex/cli).
    The companion uses its existing app-server integration. Neither Codex itself
    nor account credentials are included in the download.
-2. Put the executable in a permanent, user-writable location and double-click it.
-   Alternatively, `companion/install-executable.ps1` copies it to the user's
-   Programs folder and creates Start, Settings, Stop and Restart desktop controls.
+2. Extract the complete Windows ZIP to a permanent, user-writable folder, keeping
+   its notices, licenses and documentation beside `IrozonDot.exe`, then double-click
+   the executable. No Python installation is needed. Alternatively, right-click
+   the extracted `install-executable.ps1` and choose Run with PowerShell. It copies
+   the release bundle to the user's Programs folder and creates Start, Settings,
+   Stop and Restart desktop controls. From a source checkout the script is at
+   `companion/install-executable.ps1` and uses the versioned build output.
    That optional installer does not launch it or enable Windows startup.
 3. The browser opens `http://127.0.0.1:8788/`. Normal use shows Connection,
    Device name, Display mode and Start with Windows. Technical controls live in
@@ -41,8 +45,10 @@ BUILD-MANIFEST.json. See [validation](validation.md) for acceptance coverage.
    after acknowledgment. If the final save fails, retain that recovery file and
    retry; do not erase or rotate credentials.
 7. Set the device name and Save name. It allows at most 18 ASCII letters, digits,
-   spaces, periods, underscores and hyphens. The default shown is Irozon Dot;
-   blank retains the firmware default. The signed heading reaches the device on
+   spaces, periods, underscores and hyphens. The initial default is `IROZON DOT`.
+   Saving blank or whitespace-only input intentionally hides the heading; leading
+   and trailing whitespace is trimmed. The saved value survives companion reload
+   and, once received, device restart. The signed heading reaches the device on
    its next fetch, within about 30 seconds. Mode changes apply immediately and
    wait for reported confirmation. The standby button also uses confirmed state.
 8. Start with Windows manages a per-user Run entry for new installs. A deliberately

@@ -74,6 +74,7 @@ def main():
     shutil.copyfile(ROOT / 'NOTICE', path.parent / 'NOTICE')
     shutil.copyfile(ROOT / 'THIRD_PARTY_NOTICES.md', path.parent / 'THIRD_PARTY_NOTICES.md')
     shutil.copyfile(ROOT / 'SECURITY.md', path.parent / 'SECURITY.md')
+    shutil.copyfile(ROOT / 'companion/install-executable.ps1', path.parent / 'install-executable.ps1')
     shutil.copytree(ROOT / 'licenses', path.parent / 'licenses', dirs_exist_ok=True)
     shutil.copytree(ROOT / 'docs', path.parent / 'docs', dirs_exist_ok=True)
     (path.parent / 'home-assistant').mkdir(exist_ok=True)
