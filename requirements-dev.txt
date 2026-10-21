@@ -1,0 +1,6 @@
+# Tests and optional bitmap previews; not required by the Windows executable.
+PyYAML==6.0.3
+Jinja2==3.1.6
+MarkupSafe==3.0.4
+Pillow==12.3.0
+pyserial==3.5

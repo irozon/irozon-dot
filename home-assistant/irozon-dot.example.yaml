@@ -1,0 +1,111 @@
+# Home Assistant package. Merge the generated secret into HA's secrets.yaml.
+# Device IPv4 address is reserved in the router; adjust URLs if it changes.
+rest:
+  - resource: http://192.168.1.20:8080/api/state
+    headers:
+      Authorization: !secret irozon_dot_authorization
+    scan_interval: 10
+    timeout: 3
+    sensor:
+      - name: Irozon Dot Control
+        unique_id: irozon_dot_control
+        value_template: "{{ value_json.connection }}"
+        json_attributes:
+          - display_on
+          - mode
+          - mode_name
+          - connection
+          - usage_status
+          - backlight_control
+          - power_control
+
+rest_command:
+  irozon_dot_on:
+    url: http://192.168.1.20:8080/api/display/on
+    method: POST
+    headers:
+      Authorization: !secret irozon_dot_authorization
+    timeout: 3
+  irozon_dot_off:
+    url: http://192.168.1.20:8080/api/display/off
+    method: POST
+    headers:
+      Authorization: !secret irozon_dot_authorization
+    timeout: 3
+  irozon_dot_mode:
+    url: >-
+      http://192.168.1.20:8080/api/display/mode/{{
+        {'Green Dashboard':'green', 'Blue Minimal':'blue',
+         'Orange Numbers':'orange', 'Classic Rings':'classic'}[mode] }}
+    method: POST
+    headers:
+      Authorization: !secret irozon_dot_authorization
+    timeout: 3
+
+template:
+  - switch:
+      - name: Irozon Dot Display
+        unique_id: irozon_dot_display
+        icon: mdi:monitor
+        availability: "{{ is_state('sensor.irozon_dot_control', 'connected') }}"
+        state: "{{ state_attr('sensor.irozon_dot_control', 'display_on') | bool(false) }}"
+        turn_on:
+          - action: rest_command.irozon_dot_on
+          - delay:
+              milliseconds: 500
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.irozon_dot_control
+        turn_off:
+          - action: rest_command.irozon_dot_off
+          - delay:
+              milliseconds: 500
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.irozon_dot_control
+    select:
+      - name: Irozon Dot Mode
+        unique_id: irozon_dot_mode
+        icon: mdi:palette
+        availability: "{{ is_state('sensor.irozon_dot_control', 'connected') }}"
+        state: "{{ state_attr('sensor.irozon_dot_control', 'mode_name') }}"
+        options: "{{ ['Green Dashboard', 'Blue Minimal', 'Orange Numbers', 'Classic Rings'] }}"
+        select_option:
+          - action: rest_command.irozon_dot_mode
+            data:
+              mode: "{{ option }}"
+          - delay:
+              milliseconds: 500
+          - action: homeassistant.update_entity
+            target:
+              entity_id: sensor.irozon_dot_control
+
+# Follow actual light state for physical-button and dashboard changes.
+automation:
+  - id: irozon_dot_follow_example_light
+    alias: Irozon Dot follows example light
+    description: Follow the chosen light without changing light behavior.
+    triggers:
+      - trigger: state
+        entity_id: light.example_room
+        to: "on"
+      - trigger: state
+        entity_id: light.example_room
+        to: "off"
+      - trigger: homeassistant
+        event: start
+      - trigger: state
+        entity_id: sensor.irozon_dot_control
+        to: connected
+    actions:
+      - wait_template: >-
+          {{ states('light.example_room') in ['on', 'off']
+             and states('switch.irozon_dot_display') in ['on', 'off'] }}
+        timeout: "00:00:30"
+        continue_on_timeout: false
+      - action: >-
+          {{ 'switch.turn_on' if is_state('light.example_room', 'on')
+             else 'switch.turn_off' }}
+        target:
+          entity_id: switch.irozon_dot_display
+    mode: restart

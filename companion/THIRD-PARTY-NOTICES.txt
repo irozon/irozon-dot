@@ -1,0 +1,30 @@
+Irozon Dot Windows companion
+
+Project contributions: MIT; see LICENSE. Complete hardware-source attribution is
+in THIRD_PARTY_NOTICES.md. Keep that file and supplied licenses with redistribution.
+
+Bundled executable components:
+- CPython 3.14.6 and its included runtime dependencies: see
+  licenses/companion/Python-3.14.6-LICENSE.txt (includes libffi and Microsoft runtime terms).
+- pySerial 3.5, copyright Chris Liechti: BSD-3-Clause; see
+  licenses/companion/pyserial-3.5-LICENSE.txt.
+- PyInstaller 6.22.3 bootloader and loader files: GPL-2.0-or-later with its
+  bootloader exception; runtime hooks include Apache-2.0 components. See
+  licenses/companion/PyInstaller-6.22.3-COPYING.txt for complete terms and Apache text.
+- OpenSSL used by the bundled CPython TLS module: Apache-2.0; see
+  licenses/companion/OpenSSL-LICENSE.txt. This product includes software developed by
+  the OpenSSL Project for use in the OpenSSL Toolkit (https://www.openssl.org/).
+
+Build tooling (not shipped as separate installed applications): PyInstaller,
+pyinstaller-hooks-contrib, altgraph, packaging, pefile, pywin32-ctypes, setuptools.
+The build environment is pinned in companion/requirements-build.txt.
+
+Windows system APIs and runtime dependencies are used under their respective
+platform terms. Codex CLI is an external prerequisite and is not bundled.
+No Codex account credentials or personal device configuration are distributed.
+
+Upstream sources:
+https://www.python.org/
+https://github.com/pyserial/pyserial/tree/v3.5
+https://github.com/pyinstaller/pyinstaller/tree/v6.22.3
+https://www.openssl.org/

@@ -1,0 +1,23 @@
+.pio/
+.vscode/
+__pycache__/
+companion/local.json
+include/companion_config.h
+companion/logs/
+include/control_config.h
+home-assistant/secrets.local.yaml
+dist/
+# Installed-site package is private; distribute the generic example instead.
+home-assistant/irozon-dot.yaml
+*.pyc
+*.pyo
+.venv/
+.pytest_cache/
+build/
+*.egg-info/
+.env
+**/secrets.yaml
+*.pem
+*.key
+*.pfx
+**/pairing-pending.json
