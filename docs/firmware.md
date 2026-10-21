@@ -1,12 +1,10 @@
 # Build, flash and pair firmware
 
-The release candidate source includes synchronized Green Dashboard blinking/mouth
-animation, adaptive and explicitly empty headings, four display modes, final BOOT
-gestures, USB pairing and the existing Home Assistant controls. The live API advertises
-heading/USB capabilities but exposes no build identifier: it cannot prove that all
-latest source changes are flashed. No flash was performed during release validation.
-Home Assistant remains in place; see windows-integration-results.md for earlier
-physical acceptance and the checks below for an approved firmware update.
+The firmware provides four display modes, adaptive or intentionally empty
+headings, Green Dashboard face animation, BOOT controls, USB pairing and the
+Home Assistant HTTP controls. The current owner-tested device has a known BOOT
+hold-to-wake failure; HTTP and Home Assistant wake work. See
+[troubleshooting](troubleshooting.md).
 
 Install PlatformIO Core and run from the repository root:
 
@@ -64,12 +62,3 @@ own `irozon-link` namespace. Wi-Fi reset calls WiFiManager's Wi-Fi credential
 reset, not a global NVS erase. It preserves display settings and link keys.
 The eight-second gesture deliberately removes Wi-Fi credentials: test it only
 with a way to provision again. No destructive reset was tested on the live unit.
-
-## Acceptance after an approved flash
-
-Verify all four modes, heading lengths 0 and 18, USB success/timeout/retry,
-reboot persistence and loss of PC connectivity. Check releases around 1.9,
-2.1 and 7.9 seconds: no long release may cycle mode or reset Wi-Fi prematurely.
-Check button standby → HA state and HA standby → panel state; confirm usage
-updates never wake standby. HA's state polling can take 10 seconds.
-Test an 8.1-second Wi-Fi reset only with explicit approval and reprovisioning ready.

@@ -1,110 +1,109 @@
 # Irozon Dot
 
-A small round display for your Codex usage allowance, built with an ESP32-C3
-Super Mini, a 240×240 GC9A01 display and a Windows Python companion.
+Irozon Dot is a small round display for Codex five-hour and weekly usage. An
+ESP32-C3 reads usage from the Windows companion and shows it in four layouts.
+Codex remains responsible for sign-in; the companion does not send prompts.
 
-**v1.0.0-rc.2 preparation:** source and a standalone Windows executable are
-available locally. Nothing has been published. The repaired Windows executable now connects to the development device with
-existing credentials. USB enrollment and final physical acceptance retain the
-limits documented in the integration report. See [verified behavior and release gates](docs/validation.md).
-The [current readiness review](docs/release-readiness.md) records candidate versus
-installed versions and the remaining stable-release blockers.
+The screenshots use sample values, not live account readings.
 
-![Green, Blue, Orange and Classic display modes](docs/display-modes.png)
-
-Unflashed presentation improvements add adaptive/empty headings and a synchronized
-Green blink and mouth movement. See [heading validation](docs/display-presentation.md)
-and [face previews](docs/face-animation.md) for bounds, timing and physical acceptance limits.
-
-These are simulated layout examples, not photographs or live account readings.
-**W** means weekly allowance remaining; **H** means five-hour allowance remaining.
-Countdowns show time until reset. Values are floored for whole-number display.
-
-| Mode | Layout |
+| Green Dashboard | Blue Minimal |
 | --- | --- |
-| Green Dashboard | Gauge eyes, a usage-sensitive mouth and an outer rim |
-| Blue Minimal | Large weekly percentage and smaller five-hour percentage |
-| Orange Numbers | Two large percentages without gauges |
-| Classic Rings | Concentric weekly and five-hour rings |
+| ![Green Dashboard](docs/mode-green.png) | ![Blue Minimal](docs/mode-blue.png) |
 
-## Get started
+| Orange Numbers | Classic Rings |
+| --- | --- |
+| ![Orange Numbers](docs/mode-orange.png) | ![Classic Rings](docs/mode-classic.png) |
 
-1. Check the [supported hardware and wiring](docs/hardware.md).
-2. Build and [flash the firmware](docs/firmware.md). The live build never falls
-   back to simulated values; the separate demo build always says TEST DATA.
-3. Install and sign in to Codex CLI, then run the standalone Windows executable.
-   No Python installation or script editing is needed for executable users.
-   Follow [Windows installation and pairing](docs/windows-companion-distribution.md).
-4. Optionally install the [Home Assistant package](docs/home-assistant.md) for
-   display power, mode selection and following a chosen light.
+## Parts and wiring
 
-The PC must remain awake and reachable on the same trusted private network.
-Codex is the only supported provider. This is a usage display, not an AI chat
-client; it sends no prompts and performs no inference.
+- ESP32-C3 Super Mini with 4 MB flash
+- 1.28-inch, 240×240 GC9A01 SPI round display
+- Seven jumper wires and a USB data cable
+- Optional 3D-printed enclosure
+
+Disconnect USB while wiring. Connect the display by its printed pin labels:
+
+| GC9A01 display | ESP32-C3 Super Mini |
+| --- | --- |
+| VCC | 3V3 |
+| GND | GND |
+| RST | GPIO0 |
+| CS | GPIO1 |
+| DC | GPIO10 |
+| SDA / MOSI | GPIO3 |
+| SCL / SCLK | GPIO4 |
+
+SDA and SCL are SPI signals here, not I²C. Do not connect unknown module pins
+to 5 V. The [hardware guide](docs/hardware.md) describes the verified target
+and supported-device limits.
+
+For the enclosure, download the STL files and follow the original printable
+enclosure and assembly reference on
+[MakerWorld](https://makerworld.com/en/models/2872376-esp32-plane-radar-live-ads-b-on-a-round-display?from=recommend#profileId-3207083).
+The STL files are linked there and are not redistributed in this repository.
+Print the parts using the model's instructions, seat the display in the round
+front opening, secure the ESP32 inside, and route the wires without pinching
+them when closing the enclosure. Check the wiring before reconnecting USB.
+
+## Windows companion
+
+1. Install [Codex CLI](https://developers.openai.com/codex/cli). In PowerShell,
+   run `codex login` and finish sign-in in the browser. Check it with
+   `codex login status`, using the same Windows account that will run Irozon Dot.
+2. Download and extract the Windows companion, then start `IrozonDot.exe`.
+   Python is not required. The companion opens its settings page in your browser.
+3. Discover the device or enter its IP address, pair it securely, and run
+   **Test connection**. Choose one of the four display modes and optionally set
+   a heading (up to 18 characters; an empty heading hides the title).
+4. Turn on **Start with Windows** if desired. Keep this PC awake and connected
+   to the same trusted network as the ESP32.
+
+See the [Windows installation guide](docs/windows-companion-distribution.md)
+for first-run setup, existing installations, security and troubleshooting.
+The companion uses Codex's authenticated app-server interface; neither Codex
+credentials nor Codex itself are bundled.
+
+## Firmware
+
+Install PlatformIO, connect the ESP32 by USB and build the live firmware:
+
+```powershell
+pio run -e supermini
+pio device list
+pio run -e supermini -t upload --upload-port COM3
+```
+
+Replace `COM3` with the port shown for your board. PlatformIO handles the image
+offsets. Do not use `erase` when you want to preserve Wi-Fi, pairing and display
+settings. See the [firmware guide](docs/firmware.md) for first boot, Wi-Fi setup,
+pairing and recovery. `demo` is a separate build that displays TEST DATA.
+
+## Optional Home Assistant
+
+The built-in package provides a display power switch and four-mode selector.
+It can also follow the state of one light or light group, including dashboard
+changes. See [Home Assistant setup](docs/home-assistant.md) for the example YAML,
+secret handling and configuration validation. OFF blanks and sleeps the LCD
+panel; the backlight remains lit with the documented wiring.
 
 ## Controls and limits
 
-In the prepared firmware, BOOT actions occur **on release**:
+In the current firmware, BOOT actions are classified on release: a short press
+cycles modes, a hold of about two seconds toggles display standby, and a hold
+of about eight seconds resets Wi-Fi settings. Hold BOOT while tapping RESET/EN
+to enter the ESP32 bootloader. Do not use the eight-second hold unless you are
+ready to configure Wi-Fi again.
 
-| Duration | Action |
-| --- | --- |
-| Under 40 ms | Ignore noise |
-| 40 ms to under 2 seconds | Cycle Green → Blue → Orange → Classic |
-| 2 seconds to under 8 seconds | Toggle display standby |
-| 8 seconds or longer | Reset saved Wi-Fi and restart |
+**Backlight:** the seven-wire display has no connected backlight control. OFF
+blanks the image and sleeps the panel, but cannot switch off its LEDs. The
+[hardware guide](docs/hardware.md#backlight) explains the verified limitation.
 
-A long release never cycles modes. Hold BOOT while tapping RESET/EN to enter
-the ROM bootloader. Existing flashed versions may have older gestures.
-Mode and display power persist in NVS. Button and HTTP standby share one state.
-Standby leaves Wi-Fi and usage polling active; it does not turn off the PC.
-
-**Backlight limitation:** the verified seven-wire display has no controllable
-backlight connection. OFF blanks the image and sleeps the panel, but its LEDs
-remain illuminated. Neither a brightness setting nor an invented GPIO fixes
-this. Read the [hardware findings and verified options](docs/hardware.md#backlight).
-
-## How it works
-
-The companion owns a local Codex app-server child over stdio and reads the
-authenticated account's rate limits once per minute. It serves only normalized
-allowance data, signed with a separate device key. The ESP32 fetches every 30
-seconds and counts down locally. OpenAI account credentials remain with Codex.
-The settings UI binds only to localhost; the LAN usage listener permits only the
-configured device IP. See [architecture and security](docs/architecture.md).
-
-Only the codex bucket with 300-minute and 10,080-minute windows is supported.
-Missing or changed windows show unavailable instead of guessing. Stale/offline
-data is marked explicitly; no quota refill is inferred locally.
-
-## Develop and validate
-
-Run from the repository root on Windows with Python and PlatformIO:
-
-```powershell
-python -m venv .venv
-.venv/Scripts/python.exe -m pip install -r requirements-dev.txt
-.venv/Scripts/python.exe -m unittest discover -s companion -v
-.venv/Scripts/python.exe -m unittest discover -s scripts -p 'test_*.py' -v
-pio run -e supermini -e demo
-.venv/Scripts/python.exe scripts/preview.py
-powershell -NoProfile -File companion/build-windows.ps1
-.venv/Scripts/python.exe scripts/check_windows_executable.py
-.venv/Scripts/python.exe scripts/release_audit.py --export
-```
-
-The preview is a bitmap/layout check, not a hardware emulator. Build dependencies
-are pinned. Python remains the canonical companion; its provider factory exposes
-only the implemented Codex provider. No frontend framework is used.
-
-See [troubleshooting](docs/troubleshooting.md), [validation](docs/validation.md)
-and the [repository/security audit](docs/release-audit.md). Do not publish local
-pairing headers, JSON, logs, private HA YAML, firmware binaries or .git backups.
+On the owner's tested unit, a BOOT hold did not wake the display from standby,
+although HTTP and Home Assistant wake worked. The cause is unresolved; see
+[troubleshooting](docs/troubleshooting.md) for the current workaround.
 
 ## License
 
-Irozon Dot contributions are MIT licensed; see [LICENSE](LICENSE). Third-party
-acknowledgments and required notices are collected in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md). Dependency terms and firmware
-binary redistribution gates are described in the [license inventory](docs/licenses.md).
-
-This project is independent of OpenAI and the hardware/library authors.
+Irozon Dot contributions are MIT licensed ([LICENSE](LICENSE)). Required
+third-party notices and component license terms are in
+[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [docs/licenses.md](docs/licenses.md).

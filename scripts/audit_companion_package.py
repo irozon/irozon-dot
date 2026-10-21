@@ -82,8 +82,6 @@ def main():
                     path.parent / 'home-assistant/irozon-dot.example.yaml')
     if (ROOT / 'docs/windows-companion-distribution.md').exists():
         guide = (ROOT / 'docs/windows-companion-distribution.md').read_text(encoding='utf-8')
-        guide = guide.replace('](validation.md)', '](docs/validation.md)')
-        guide = guide.replace('](windows-integration-results.md)', '](docs/windows-integration-results.md)')
         (path.parent / 'README.md').write_text(guide, encoding='utf-8')
     print('PASS: explicit package payload contains no private config, known personal keys or unrelated runtime DLLs')
     print('Executable:', manifest['bytes'], 'bytes;', round(manifest['bytes']/1048576, 2), 'MiB')

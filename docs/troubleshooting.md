@@ -15,6 +15,7 @@
 | Duplicate/startup warning | Stop the old installation explicitly, import a copy of settings, and deliberately migrate its old task/shortcut. The new app refuses duplicate legacy startup. |
 | DPAPI config fails on another account | Encryption belongs to the original Windows user. Import original plaintext keys privately or re-pair deliberately. |
 | HA unavailable or lagging | Check HA configuration, bearer secret, source allowlist and device reachability. REST updates can take 10 seconds. Use one light-state follower. |
+| BOOT hold does not wake the display | This failed on the owner's tested unit after the current firmware flash. HTTP and Home Assistant wake work. Use those controls to wake it; the BOOT wake cause is unresolved. |
 
 Windows executable users need no Python. Codex CLI is still required and owns
 account sign-in. The PC must stay awake. Windows may warn about the unsigned

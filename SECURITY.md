@@ -9,7 +9,7 @@ environment. ESP32 link keys are not protected against physical extraction.
 Keep local JSON, generated private headers, HA secrets, paired firmware binaries,
 logs and Git metadata backups out of releases and issue attachments. Use only
 generic addresses in examples. See docs/architecture.md for the boundaries and
-docs/release-audit.md for current findings.
+docs/release-audit.md for distribution checks.
 
 For a security issue, arrange a private channel with the maintainer before sharing
 sensitive details. Do not post live tokens or credentials in a public issue.

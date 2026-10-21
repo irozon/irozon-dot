@@ -3,12 +3,11 @@
 The Python implementation remains canonical. `IrozonDot.exe` is a standalone,
 windowed Windows x64 application built with PyInstaller. Python and pySerial are
 included; users do not install Python, edit scripts, or install a web framework.
-The repaired executable has been exercised with the development device using its
-existing credentials. No release has been published and no firmware was flashed
-during this repair. See [integration results](windows-integration-results.md).
+The interface runs locally in the browser and connects to the ESP32 over the
+trusted home network.
 
 Executable size, SHA-256 and native dependencies are recorded in the accompanying
-BUILD-MANIFEST.json. See [validation](validation.md) for acceptance coverage.
+BUILD-MANIFEST.json.
 
 ## New installation
 

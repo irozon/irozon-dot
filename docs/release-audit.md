@@ -31,14 +31,10 @@ Both release packages include the central notices and complete component license
 files. Legacy source-inspection notes are not part of the product documentation.
 No attribution is removed from third-party source or dependency license files.
 
-## Readiness
+## Distribution checks
 
-A private source and Windows executable release candidate is appropriate after
-[validation](validation.md) passes. Stable public release still needs physical
-USB/heading/BOOT acceptance, an actual new-user Windows sign-in test and resolution
-of the firmware binary licensing gates. The Windows executable is unsigned.
-
-Existing network limitations remain: plaintext trusted-LAN HTTP, a physical
-Wi-Fi setup access point without a password, and device keys recoverable through
-physical access. See [SECURITY.md](../SECURITY.md). No network, firmware or running
-Windows application changes are part of documentation/notice cleanup.
+Keep private headers, settings, HA secrets, Codex credentials, logs, Git metadata
+and locally configured firmware out of archives. Review the current firmware
+binary redistribution requirements in [the license inventory](licenses.md).
+The Windows executable is unsigned. Network limitations are described in
+[SECURITY.md](../SECURITY.md).
