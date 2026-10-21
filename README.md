@@ -1,10 +1,8 @@
 # Irozon Dot
 
-Irozon Dot is a small round display for Codex five-hour and weekly usage. An
-ESP32-C3 reads usage from the Windows companion and shows it in four layouts.
-Codex remains responsible for sign-in; the companion does not send prompts.
+Irozon Dot shows your Codex five-hour and weekly usage on a small round screen. A Windows app reads usage from the signed-in Codex CLI and sends it to the ESP32. It does not read or bundle your Codex credentials.
 
-The screenshots use sample values, not live account readings.
+## Pictures
 
 | Green Dashboard | Blue Minimal |
 | --- | --- |
@@ -14,17 +12,20 @@ The screenshots use sample values, not live account readings.
 | --- | --- |
 | ![Orange Numbers](docs/mode-orange.png) | ![Classic Rings](docs/mode-classic.png) |
 
-## Parts and wiring
+## What you need
 
-- [ESP32-C3 Super Mini](https://www.aliexpress.us/item/3256807018729495.html)
-  with 4 MB flash
-- [1.28-inch, 240×240 GC9A01 SPI round display](https://pl.aliexpress.com/item/1005004482028005.html)
-- Seven jumper wires and a USB data cable
-- Optional 3D-printed enclosure
+| Part | Notes | Example |
+| --- | --- | --- |
+| ESP32-C3 Super Mini | 4 MB flash | [Buy](https://www.aliexpress.us/item/3256807018729495.html) |
+| Round LCD | 1.28-inch GC9A01, 240×240 | [Buy](https://pl.aliexpress.com/item/1005004482028005.html) |
+| Jumper wires | Seven | — |
+| USB cable | Must carry data | — |
 
-Disconnect USB while wiring. Connect the display by its printed pin labels:
+## Connect the seven wires
 
-| GC9A01 display | ESP32-C3 Super Mini |
+Unplug USB first. Follow the labels on your display.
+
+| Display | ESP32-C3 |
 | --- | --- |
 | VCC | 3V3 |
 | GND | GND |
@@ -34,81 +35,37 @@ Disconnect USB while wiring. Connect the display by its printed pin labels:
 | SDA / MOSI | GPIO3 |
 | SCL / SCLK | GPIO4 |
 
-SDA and SCL are SPI signals here, not I²C. Do not connect unknown module pins
-to 5 V. The [hardware guide](docs/hardware.md) describes the verified target
-and supported-device limits.
+SDA and SCL carry SPI data here. They are not I²C. Leave other display pins unconnected. Do not connect unknown pins to 5 V.
 
-For the enclosure, download the STL files and follow the original printable
-enclosure and assembly reference on
-[MakerWorld](https://makerworld.com/en/models/2872376-esp32-plane-radar-live-ads-b-on-a-round-display?from=recommend#profileId-3207083).
-The STL files are linked there and are not redistributed in this repository.
-Print the parts using the model's instructions, seat the display in the round
-front opening, secure the ESP32 inside, and route the wires without pinching
-them when closing the enclosure. Check the wiring before reconnecting USB.
+## Download and print the enclosure
 
-## Windows companion
+Get the STL files and assembly reference from [MakerWorld](https://makerworld.com/en/models/2872376-esp32-plane-radar-live-ads-b-on-a-round-display?from=recommend#profileId-3207083). Print the parts using the model's instructions. Fit the display in the front opening. Secure the board inside. Route wires so they are not pinched when you close the case. The STL files are not included here.
 
-1. Install [Codex CLI](https://developers.openai.com/codex/cli). In PowerShell,
-   run `codex login` and finish sign-in in the browser. Check it with
-   `codex login status`, using the Windows account that will run Irozon Dot.
-2. Download the Windows ZIP asset from a project GitHub release and extract the
-   complete archive. Run `IrozonDot.exe`; Python is not required. Its settings
-   page opens in your browser.
-3. Discover the device or enter its IP address, pair it securely, and run
-   **Test connection**. Choose one of the four display modes and optionally set
-   a heading (up to 18 characters; an empty heading hides the title).
-4. Turn on **Start with Windows** if desired. Keep this PC awake and connected
-   to the same trusted network as the ESP32.
+## Flash the ESP32
 
-See the [Windows installation guide](docs/windows-companion-distribution.md)
-for first-run setup, existing installations, security and troubleshooting.
-The companion uses Codex's authenticated app-server interface; neither Codex
-credentials nor Codex itself are bundled.
-
-## Firmware
-
-Install PlatformIO, connect the ESP32 by USB and build the live firmware:
+Install [PlatformIO Core](https://docs.platformio.org/en/latest/core/installation/index.html). Open PowerShell in this folder.
 
 ```powershell
 pio run -e supermini
 pio device list
-pio run -e supermini -t upload --upload-port COM3
+pio run -e supermini -t upload --upload-port COM7
 ```
 
-Replace `COM3` with the port shown for your board. PlatformIO handles the image
-offsets. Do not use `erase` when you want to preserve Wi-Fi, pairing and display
-settings. See the [firmware guide](docs/firmware.md) for first boot, Wi-Fi setup,
-pairing and recovery. `demo` is a separate build that displays TEST DATA.
+Replace `COM7` with your board's port. Do not erase flash; that removes saved Wi-Fi and display settings. On first boot, join `Irozon-Dot-Setup` and open `http://192.168.4.1`. Enter your 2.4 GHz Wi-Fi details. Keep setup to a trusted place; the temporary setup network has no password.
+
+## Download and run the Windows app
+
+Follow the [Windows setup steps](docs/windows-installation.md). The app is a ZIP with `IrozonDot.exe`; Python is not needed. Install Codex CLI separately and sign in. The app opens its settings in your browser.
 
 ## Optional Home Assistant
 
-The built-in package provides a display power switch and four-mode selector.
-It can also follow the state of one light or light group, including dashboard
-changes. See [Home Assistant setup](docs/home-assistant.md) for the example YAML,
-secret handling and configuration validation. OFF blanks and sleeps the LCD
-panel; the backlight remains lit with the documented wiring.
+Follow [Home Assistant setup](docs/home-assistant.md) to add a display switch and mode selector. It can also follow one light or light group. This is optional.
 
-## Controls and limits
+## Known limitations and credits
 
-In the current firmware, BOOT actions are classified on release: a short press
-cycles modes, a hold of about two seconds toggles display standby, and a hold
-of about eight seconds resets Wi-Fi settings. Hold BOOT while tapping RESET/EN
-to enter the ESP32 bootloader. Do not use the eight-second hold unless you are
-ready to configure Wi-Fi again.
+- OFF blanks and sleeps the LCD controller. The seven-wire display has no backlight control, so its LEDs stay lit. No safe backlight modification is known for this display board.
+- BOOT tap cycles modes. Hold about 2 seconds to toggle display power. Hold about 8 seconds to clear Wi-Fi settings. To enter the bootloader, hold BOOT while tapping RESET/EN. The source has a BOOT-wake fix; it still needs physical confirmation on the latest image.
+- The tested setup is ESP32-C3 Super Mini, 4 MB flash, GC9A01 display and Windows 11 x64. Other boards and systems are untested.
+- The original display adapter and hardware configuration are credited in [third-party notices](THIRD_PARTY_NOTICES.md). Keep those notices with copies. Firmware binary redistribution still has open license requirements; see [license notes](docs/licenses.md).
 
-**Backlight:** the seven-wire display has no connected backlight control. OFF
-blanks the image and sleeps the panel, but cannot switch off its LEDs. The
-[hardware guide](docs/hardware.md#backlight) explains the verified limitation.
-
-The previously tested firmware image failed to wake from BOOT standby, although
-HTTP and Home Assistant wake worked. Current source adds GPIO9 level sampling
-to recover missed interrupt edges; the fix passes timing/state-machine tests and
-both builds, but still needs physical confirmation after flashing. Until then,
-use HTTP or Home Assistant to wake the tested unit. See
-[troubleshooting](docs/troubleshooting.md).
-
-## License
-
-Irozon Dot contributions are MIT licensed ([LICENSE](LICENSE)). Required
-third-party notices and component license terms are in
-[THIRD_PARTY_NOTICES.md](THIRD_PARTY_NOTICES.md) and [docs/licenses.md](docs/licenses.md).
+If setup fails, see [Troubleshooting](docs/troubleshooting.md).

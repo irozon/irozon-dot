@@ -1,20 +1,7 @@
 # Security
 
-Use only on a trusted private LAN. The usage feed has integrity/replay protection,
-not encryption; ESP32 bearer HTTP control credentials can be observed on that LAN.
-Do not expose device/companion ports to the internet. Local settings assume a
-trusted Windows computer. Provision the open Wi-Fi setup AP in a trusted physical
-environment. ESP32 link keys are not protected against physical extraction.
+Use Dot on a trusted private network. Its device controls use HTTP, so do not expose port 8080 to the internet. Keep Windows settings, pairing keys and Home Assistant secrets private.
 
-Keep local JSON, generated private headers, HA secrets, paired firmware binaries,
-logs and Git metadata backups out of releases and issue attachments. Use only
-generic addresses in examples. See docs/architecture.md for the boundaries and
-docs/release-audit.md for distribution checks.
+The Wi-Fi setup network has no password. Set it up where other people cannot join. Local settings are meant for a trusted Windows account and computer.
 
-For a security issue, arrange a private channel with the maintainer before sharing
-sensitive details. Do not post live tokens or credentials in a public issue.
-If an actual credential is exposed, revoke/rotate it deliberately and update its
-consumers; deleting the visible file alone does not revoke a credential.
-
-Release preparation is local only. Run scripts/release_audit.py before creating
-a distributable source archive; re-audit all reachable history before a later push.
+Do not post working credentials or private logs in an issue. Contact the maintainer privately before sharing a security problem. Rotate any credential that was exposed.
