@@ -1,4 +1,4 @@
-"""Pinned-font bounds/pixel checks; physical panel acceptance still needs a flash."""
+"""Host-side layout checks; physical display acceptance is confirmed in README."""
 import unittest
 import math
 from PIL import Image, ImageChops, ImageDraw

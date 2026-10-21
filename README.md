@@ -64,7 +64,7 @@ Follow [Home Assistant setup](docs/home-assistant.md) to add a display switch an
 ## Known limitations and credits
 
 - OFF blanks and sleeps the LCD controller. The seven-wire display has no backlight control, so its LEDs stay lit. No safe backlight modification is known for this display board.
-- BOOT tap cycles modes. Hold about 2 seconds to toggle display power. Hold about 8 seconds to clear Wi-Fi settings. To enter the bootloader, hold BOOT while tapping RESET/EN. The source has a BOOT-wake fix; it still needs physical confirmation on the latest image.
+- BOOT tap cycles modes. Hold about 2 seconds to toggle display power. Hold about 8 seconds to clear Wi-Fi settings. To enter the bootloader, hold BOOT while tapping RESET/EN. Hardware tests confirmed BOOT standby and wake, Home Assistant power and mode controls, and all four layouts.
 - The tested setup is ESP32-C3 Super Mini, 4 MB flash, GC9A01 display and Windows 11 x64. Other boards and systems are untested.
 - The original display adapter and hardware configuration are credited in [third-party notices](THIRD_PARTY_NOTICES.md). Keep those notices with copies. Firmware binary redistribution still has open license requirements; see [license notes](docs/licenses.md).
 

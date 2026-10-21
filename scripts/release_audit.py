@@ -53,7 +53,9 @@ def scan(data, markers, attribution=False):
         if len(set(value)) > 3 and not value.startswith((b'REPLACE_', b'Not configured', b'Stored securely')):
             findings.add('literal-credential-review')
     if not attribution:
-        if any(not value.lower().endswith((b'@example.com', b'@example.invalid')) for value in EMAIL.findall(data)):
+        if any(not value.lower().endswith((b'@example.com', b'@example.invalid',
+                                           b'@users.noreply.github.com'))
+               for value in EMAIL.findall(data)):
             findings.add('personal-email-review')
         for value in IP.findall(data):
             try:

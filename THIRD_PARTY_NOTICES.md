@@ -54,11 +54,24 @@ the Windows executable does not contain the firmware libraries.
 | Arduino-ESP32 2.0.14 | [LGPL text](licenses/firmware/Arduino-ESP32-2.0.14-LGPL.md) |
 | ESP-IDF 4.4.6 | [Apache license text](licenses/firmware/ESP-IDF-4.4.6-Apache.txt) |
 
-The framework, linked ESP-IDF components and converted FreeSans fonts require
-additional corresponding-source/relinking and provenance review before firmware
-binary redistribution. This inventory is not a claim that those gates are
-resolved. See [redistribution limits](docs/licenses.md). Source releases fetch
-pinned dependencies rather than vendoring their source or fonts.
+## Display fonts
+
+The UI uses four bold glyph tables from the pinned LovyanGFX 1.2.7 dependency:
+`FreeSansBold9pt7b.h`, `FreeSansBold12pt7b.h`, `FreeSansBold18pt7b.h` and
+`FreeSansBold24pt7b.h`. The dependency's README lists its GFX font code under
+Adafruit's 2-clause BSD license; that complete notice is in the LovyanGFX license
+file above. The FreeSans face itself comes from GNU FreeFont, licensed GPL-3.0-or-later
+with a font-embedding exception. See the [official license](https://www.gnu.org/software/freefont/license.html)
+and [FAQ](https://www.gnu.org/software/freefont/FAQ.html).
+
+PlatformIO fetches these files into the ignored `.pio` build folder. They are not
+included in this repository, source archive or Windows companion package. The
+font exception covers documents; it does not settle use in a firmware executable.
+Resolve that separately before distributing firmware binaries.
+
+These firmware dependencies are fetched by PlatformIO; their code is not in this
+repository. See [redistribution limits](docs/licenses.md) before distributing a
+firmware binary.
 
 ## Windows executable components
 
