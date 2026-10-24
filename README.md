@@ -4,11 +4,11 @@ Irozon Dot shows Codex five-hour and weekly usage on a small round screen. A Win
 
 ## Displays
 
-| Stacked Numbers | Classic Split Arc | Companion | Analog Clock |
-| --- | --- | --- | --- |
-| ![Stacked Numbers](docs/mode-green.png) | ![Classic Split Arc](docs/mode-classic.png) | ![Companion](docs/mode-companion.png) | ![Analog Clock](docs/mode-analog.png) |
+| Stacked Numbers | Classic Split Arc | Companion |
+| --- | --- | --- |
+| ![Stacked Numbers](docs/mode-green.png) | ![Classic Split Arc](docs/mode-classic.png) | ![Companion](docs/mode-companion.png) |
 
-The usage displays show weekly and 5-hour remaining usage. Companion is an animated face with no network dependency. The clock syncs over Wi-Fi and uses Stockholm time.
+The usage displays show weekly and 5-hour remaining usage. Companion is an animated face with no network dependency.
 
 ## What you need
 

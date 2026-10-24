@@ -15,7 +15,7 @@ import sys
 import tempfile
 
 MODES = {'green': 'Stacked Numbers', 'classic': 'Classic Split Arc',
-         'companion': 'Companion', 'analog': 'Analog Clock'}
+         'companion': 'Companion'}
 HEADING_LIMIT = 18
 SECRET_KEYS = ('pairing_key', 'control_token')
 DEFAULTS = dict(bind='', esp32_ip='', port=8787, provider='codex', codex_path='',

@@ -17,8 +17,6 @@ uint32_t lastFetch = 0;
 bool fetched = false;
 uint32_t lastRetry = 0;
 int lastState = -1;
-bool ntpConfigured = false;
-constexpr char kStockholmTimeZone[] = "CET-1CEST,M3.5.0/2,M10.5.0/3";
 
 }  // namespace
 
@@ -55,10 +53,6 @@ void loop() {
   companion_pairing::poll();
   wifi.process();
   const bool connected = WiFi.status() == WL_CONNECTED;
-  if (connected && !ntpConfigured) {
-    configTzTime(kStockholmTimeZone, "pool.ntp.org", "time.google.com", "time.cloudflare.com");
-    ntpConfigured = true;
-  }
   if (connected && wifi.getConfigPortalActive()) {
     wifi.stopConfigPortal();
   }

@@ -4,7 +4,7 @@
 // Portable request policy; the compile-time checks exercise the same functions
 // used by the real HTTP handlers, without opening a listener or using secrets.
 namespace control_policy {
-enum class Command { Invalid, State, On, Off, Green, Classic, Companion, AnalogClock };
+enum class Command { Invalid, State, On, Off, Green, Classic, Companion };
 constexpr unsigned length(const char* s) {
   unsigned n = 0;
   while (s[n]) ++n;
@@ -48,8 +48,7 @@ constexpr Command route(bool get, const char* path) {
          equal(path, "/api/display/off") ? Command::Off :
          equal(path, "/api/display/mode/green") ? Command::Green :
          equal(path, "/api/display/mode/classic") ? Command::Classic :
-         equal(path, "/api/display/mode/companion") ? Command::Companion :
-         equal(path, "/api/display/mode/analog") ? Command::AnalogClock : Command::Invalid;
+         equal(path, "/api/display/mode/companion") ? Command::Companion : Command::Invalid;
 }
 // Public fixtures only; never production authentication material.
 constexpr char testToken[] = "0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef";
@@ -79,7 +78,7 @@ static_assert(route(false, "/api/display/mode/blue") == Command::Invalid);
 static_assert(route(false, "/api/display/mode/orange") == Command::Invalid);
 static_assert(route(false, "/api/display/mode/classic") == Command::Classic);
 static_assert(route(false, "/api/display/mode/companion") == Command::Companion);
-static_assert(route(false, "/api/display/mode/analog") == Command::AnalogClock);
+static_assert(route(false, "/api/display/mode/analog") == Command::Invalid);
 static_assert(route(false, "/api/display/mode/4") == Command::Invalid);
 static_assert(route(false, "/api/display/on?token=secret") == Command::Invalid);
 }  // namespace control_policy

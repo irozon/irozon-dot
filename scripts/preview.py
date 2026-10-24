@@ -147,25 +147,31 @@ def render_classic(weekly=68, session=82):
     image = Image.new('RGB', (240, 240), colors['classicBackground'])
     draw = ImageDraw.Draw(image)
     draw_text(image, 'Codex', 120, layout['ClassicHeadingY'], 'FreeSansBold12pt7b', 'white')
-    def arc(box, start, end, color, width=8):
-        draw.arc(box, start, end, fill=colors[color], width=width)
-        radius = width // 2
-        for angle in (start, end):
-            rad = math.radians(angle)
-            x = round(120 + math.cos(rad) * layout['ClassicGaugeRadius'])
-            y = round(layout['ClassicGaugeY'] + math.sin(rad) * layout['ClassicGaugeRadius'])
-            draw.ellipse((x-radius, y-radius, x+radius, y+radius), fill=colors[color])
-    r = layout['ClassicGaugeRadius']
-    bounds = (120-r, layout['ClassicGaugeY']-r, 120+r, layout['ClassicGaugeY']+r)
-    arc(bounds, 135, 225, 'classicOrangeTrack')
-    arc(bounds, 315, 405, 'classicRedTrack')
-    if weekly:
-        arc(bounds, 135, 135 + 90 * weekly / 100, 'classicOrange')
-    if session:
-        arc(bounds, 405 - 90 * session / 100, 405, 'classicRed')
+    cx, cy = 120, layout['ClassicGaugeY']
+    radius = layout['ClassicGaugeRadius']
+
+    def arc(start, end, color, width=8):
+        points = []
+        for step in range(round((end - start) * 2) + 1):
+            angle = math.radians(start + step / 2)
+            points.append((round(cx + math.cos(angle) * radius),
+                           round(cy + math.sin(angle) * radius)))
+        draw.line(points, fill=colors[color], width=width, joint='curve')
+        cap = width // 2
+        for x, y in (points[0], points[-1]):
+            draw.ellipse((x-cap, y-cap, x+cap, y+cap), fill=colors[color])
+
+    start, sweep = layout['ClassicLeftArcStart'], layout['ClassicArcSweep']
+    finish = layout['ClassicRightArcStart'] + sweep
+    arc(start, start + sweep, 'classicWeeklyTrack')
+    arc(finish - sweep, finish, 'classicSessionTrack')
+    if weekly > 0:
+        arc(start, start + sweep * min(weekly, 100) / 100, 'classicWeekly')
+    if session > 0:
+        arc(finish - sweep * min(session, 100) / 100, finish, 'classicSession')
     draw.line((120, layout['ClassicDividerTop'], 120, layout['ClassicDividerBottom']), fill=colors['classicTrack'])
-    draw_text(image, f'{weekly}%', layout['ClassicLeftX'], layout['ClassicPercentY'], 'FreeSansBold18pt7b', 'classicOrange', .85)
-    draw_text(image, f'{session}%', layout['ClassicRightX'], layout['ClassicPercentY'], 'FreeSansBold18pt7b', 'classicRed', .85)
+    draw_text(image, f'{weekly}%', layout['ClassicLeftX'], layout['ClassicPercentY'], 'FreeSansBold18pt7b', 'classicWeekly', .85)
+    draw_text(image, f'{session}%', layout['ClassicRightX'], layout['ClassicPercentY'], 'FreeSansBold18pt7b', 'classicSession', .85)
     for label, x, countdown in (('W', layout['ClassicLeftX'], '3d 12h'), ('S', layout['ClassicRightX'], '2h 24m')):
         draw_text(image, label, x, layout['ClassicLabelY'], 'FreeSansBold9pt7b', 'white')
         draw_text(image, countdown, x, layout['ClassicResetY'], 'Font2', 'muted')
@@ -203,39 +209,16 @@ def render_companion(expression='happy'):
     return image
 
 
-def render_clock():
-    image = Image.new('RGB', (240, 240), colors['classicBackground'])
-    draw = ImageDraw.Draw(image)
-    cx, cy, radius = layout['ClockCenterX'], layout['ClockCenterY'], layout['ClockRadius']
-    for hour in range(12):
-        angle = math.radians(hour*30-90)
-        inner = radius-(8 if hour % 3 == 0 else 4)
-        color = colors['clockCyan'] if hour % 3 == 0 else colors['clockTrack']
-        draw.line((round(cx+math.cos(angle)*inner), round(cy+math.sin(angle)*inner),
-                   round(cx+math.cos(angle)*radius), round(cy+math.sin(angle)*radius)),
-                  fill=color, width=2 if hour % 3 == 0 else 1)
-    def point(angle, length):
-        a = math.radians(angle-90)
-        return round(cx+math.cos(a)*length), round(cy+math.sin(a)*length)
-    draw.line((cx, cy, *point(10*30+10*.5, 39)), fill=colors['white'], width=5)
-    draw.line((cx, cy, *point(10*6, 56)), fill=colors['white'], width=3)
-    draw.line((cx, cy, *point(34*6, 64)), fill=colors['clockCyan'], width=2)
-    draw.ellipse((cx-4, cy-4, cx+4, cy+4), fill=colors['clockCyan'])
-    draw_text(image, 'Sat, 24 Oct', cx, layout['ClockDateY'], 'FreeSans9pt7b', 'white')
-    draw_text(image, '2026', cx, layout['ClockYearY'], 'FreeSans9pt7b', 'clockCyan')
-    return image
-
-
 def render(mode, **values):
     return {'green': render_green, 'classic': render_classic,
-            'companion': render_companion, 'analog': render_clock}[mode](**values)
+            'companion': render_companion}[mode](**values)
 
 
 if __name__ == '__main__':
     output = ROOT / 'docs'
     output.mkdir(exist_ok=True)
     previews = {'green': render_green(), 'classic': render_classic(),
-                'companion': render_companion(), 'analog': render_clock()}
+                'companion': render_companion()}
     for mode, image in previews.items():
         image.save(output / f'mode-{mode}.png')
     print('Rendered: ' + ', '.join(str(output / f'mode-{mode}.png') for mode in previews))

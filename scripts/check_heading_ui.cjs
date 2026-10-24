@@ -4,7 +4,7 @@ const element = id => {
  if (!elements.has(id)) elements.set(id,{id,value:'',textContent:'',dataset:{},classList:{toggle(){},add(){}},replaceChildren(){},add(){}});
  return elements.get(id);
 };
-const modes = ['green','classic','companion','analog'].map(mode => ({id:'mode-card',dataset:{mode},disabled:false,
+const modes = ['green','classic','companion'].map(mode => ({id:'mode-card',dataset:{mode},disabled:false,
  setAttribute(name,value){this[name]=value;}}));
 const state = {connection:'needs_setup',connection_message:'Test',usage:{status:'unavailable'},provider_status:'Test',
  legacy_candidates:[],config:{heading:'',bind:'',esp32_ip:'',codex_path:''},device:null,csrf:'test'};
@@ -15,10 +15,10 @@ for (const heading of ['', 'IROZON DOT', 'Dot', undefined]) {
  state.config.heading=heading; context.render(state,true);
  assert.equal(element('heading').value,heading ?? 'IROZON DOT');
 }
-assert.deepEqual(modes.map(card=>card.dataset.mode),['green','classic','companion','analog']);
-state.connection='connected'; state.device={mode:'analog',display_on:true,mode_name:'Analog Clock'};
+assert.deepEqual(modes.map(card=>card.dataset.mode),['green','classic','companion']);
+state.connection='connected'; state.device={mode:'classic',display_on:true,mode_name:'Classic Split Arc'};
 context.render(state);
-assert.equal(modes[3]['aria-pressed'],'true');
+assert.equal(modes[1]['aria-pressed'],'true');
 let posted;
 context.fetch=async(path,options)=>{
  if(options.method==='POST') {posted=JSON.parse(options.body);state.device.mode=posted.mode;}
@@ -30,5 +30,5 @@ context.fetch=async(path,options)=>{
  assert.equal(modes[2]['aria-pressed'],'true');
  state.connection='disconnected'; context.unavailable();
  assert(modes.every(card=>card.disabled));
- console.log('PASS: settings JS preserves names, selects each of four modes via existing API, and disables cards offline');
+ console.log('PASS: settings JS preserves names, selects each of three modes via existing API, and disables cards offline');
 })().catch(error=>{console.error(error);process.exitCode=1;});

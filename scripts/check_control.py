@@ -48,7 +48,7 @@ def main():
         code, result = request('/api/state')
         assert code == 200, f'State HTTP {code}; verify source allowlist and firmware'
         assert isinstance(result['display_on'], bool)
-        assert result['mode'] in ('green', 'classic', 'companion', 'analog')
+        assert result['mode'] in ('green', 'classic', 'companion')
         assert result['connection'] == 'connected'
         assert result['backlight_control'] is False and result['power_control'] == 'panel_sleep'
         expected = {'display_on', 'mode', 'mode_name', 'connection', 'usage_status',
@@ -73,17 +73,18 @@ def main():
     initial = state()
     assert request('/api/display/on')[0] == 404  # GET must not mutate state.
     assert request('/api/display/mode/invalid', 'POST')[0] == 404
+    assert request('/api/display/mode/analog', 'POST')[0] == 404
     after = state()
     assert (after['display_on'], after['mode']) == (initial['display_on'], initial['mode'])
     print('PASS: authentication, JSON contract, invalid command isolation; usage status:', initial['usage_status'])
     if args.exercise:
         try:
             command('/api/display/off', 'display_on', False)
-            for mode in ('green', 'classic', 'companion', 'analog'):
+            for mode in ('green', 'classic', 'companion'):
                 command('/api/display/mode/'+mode, 'mode', mode)
                 assert state()['display_on'] is False
             command('/api/display/on', 'display_on', True)
-            print('PASS: power commands, four modes and selection while screen is off')
+            print('PASS: power commands, three modes and selection while screen is off')
         finally:
             command('/api/display/mode/'+initial['mode'], 'mode', initial['mode'])
             command('/api/display/'+('on' if initial['display_on'] else 'off'),

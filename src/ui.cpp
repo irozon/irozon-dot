@@ -2,7 +2,6 @@
 #include "ui_layout.h"
 #include "hardware/lgfx_config.hpp"
 #include <cmath>
-#include <ctime>
 #include <Preferences.h>
 
 namespace {
@@ -20,22 +19,20 @@ constexpr uint16_t classicTrack = rgb(0x202020);
 constexpr uint16_t white = rgb(0xE8F2EE);
 constexpr uint16_t muted = rgb(0xA3BABD);
 constexpr uint16_t amber = rgb(0xE8AF56);
-constexpr uint16_t stackWeekly = rgb(0x22D3EE);
-constexpr uint16_t stackSession = rgb(0x8B5CF6);
-constexpr uint16_t stackWeeklyTrack = rgb(0x08343C);
-constexpr uint16_t stackSessionTrack = rgb(0x261744);
+constexpr uint16_t stackWeekly = rgb(0xFF453A);
+constexpr uint16_t stackSession = rgb(0xFF9F1C);
+constexpr uint16_t stackWeeklyTrack = rgb(0x4D1511);
+constexpr uint16_t stackSessionTrack = rgb(0x4D3008);
 constexpr uint16_t faceLime = rgb(0x9BE15D);
-constexpr uint16_t clockCyan = rgb(0x22D3EE);
-constexpr uint16_t clockTrack = rgb(0x07313A);
-constexpr uint16_t classicOrange = rgb(0xFF9F1C);
-constexpr uint16_t classicRed = rgb(0xFF453A);
-constexpr uint16_t classicOrangeTrack = rgb(0x4D3008);
-constexpr uint16_t classicRedTrack = rgb(0x4D1511);
+constexpr uint16_t classicWeekly = rgb(0x22D3EE);
+constexpr uint16_t classicSession = rgb(0x9BE15D);
+constexpr uint16_t classicWeeklyTrack = rgb(0x07343A);
+constexpr uint16_t classicSessionTrack = rgb(0x263A17);
 constexpr int kClassicThickness = 8;
 constexpr uint32_t kGaugeDurationMs = 2000;
 constexpr uint32_t kAnimationFrameMs = 40;
 constexpr uint32_t kCompanionFrameMs = 50;
-constexpr uint32_t kCompanionTransitionMs = 400;
+constexpr uint32_t kCompanionWakeMs = 1600;
 uint16_t canvas = classicBackground;
 ui::Mode selectedMode = ui::Mode::Green;
 uint8_t paintedMode = 255;
@@ -54,7 +51,7 @@ bool classicWeekAvailable = false, classicSessionAvailable = false;
 float classicWeekTarget = 0, classicSessionTarget = 0;
 uint32_t classicStarted = 0, lastClassicFrame = 0;
 enum class CompanionMood : uint8_t { Uninitialized, Active, Tired, Sleeping, Waking };
-enum class CompanionAction : uint8_t { None, Blink, DoubleBlink, Glance, Happy, Surprise, Pause, Sad };
+enum class CompanionAction : uint8_t { None, Blink, DoubleBlink, Glance, Happy, Curious, Surprise, Pause, Sad };
 CompanionMood companionMood = CompanionMood::Uninitialized;
 CompanionAction companionAction = CompanionAction::None;
 uint32_t companionRandomState = 0x9E3779B9;
@@ -62,9 +59,12 @@ uint32_t companionMoodStarted = 0, companionActiveDuration = 0;
 uint32_t companionTiredDuration = 0, companionSleepingDuration = 0, companionActionStarted = 0;
 uint32_t companionActionDuration = 0, companionNextAction = 0, lastCompanionFrame = 0;
 uint32_t lastCompanionRender = 0;
+uint32_t companionTransitionDuration = 400;
+float companionCuriousGazeX = 0, companionCuriousGazeY = -0.6f;
 struct CompanionPose {
   float leftOpen = 100, rightOpen = 100;
   float gazeX = 0, gazeY = 0, bounce = 0, smile = 7, mouthOpen = 0;
+  float eyeShiftX = 0, eyeShiftY = 0;
   float closedStyle = 0;
   float leftBrowLength = 0, leftBrowY0 = -26, leftBrowY1 = -26;
   float rightBrowLength = 0, rightBrowY0 = -26, rightBrowY1 = -26;
@@ -75,12 +75,6 @@ bool companionPoseValid = false;
 bool companionTransitioning = false;
 int companionExpressionKey = -1;
 uint32_t companionTransitionStarted = 0;
-bool clockFaceDrawn = false, clockWaitingDrawn = false, clockTimeDrawn = false, clockHandsDrawn = false;
-int clockLastSecond = -1, clockLastMinute = -1, clockLastDate = -1;
-int clockHourX = kClockCenterX, clockHourY = kClockCenterY;
-int clockMinuteX = kClockCenterX, clockMinuteY = kClockCenterY;
-int clockSecondX = kClockCenterX, clockSecondY = kClockCenterY;
-uint32_t lastClockPoll = 0;
 heading_policy::Heading displayHeading;
 
 void text(const char* value, int cx, int y, int width, int height,
@@ -104,9 +98,9 @@ void startCompanion(uint32_t now) {
   if (!companionRandomState) companionRandomState = 0x9E3779B9;
   companionMood = CompanionMood::Active;
   companionMoodStarted = now;
-  companionActiveDuration = companionBetween(45000, 85000);
+  companionActiveDuration = companionBetween(180000, 360000);
   companionAction = CompanionAction::None;
-  companionNextAction = now + companionBetween(1200, 3600);
+  companionNextAction = now + companionBetween(2500, 6500);
   lastCompanionFrame = now;
   lastCompanionRender = 0;
   companionPoseValid = false;
@@ -115,21 +109,36 @@ void startCompanion(uint32_t now) {
 }
 
 void startCompanionAction(uint32_t now) {
-  const uint32_t pick = companionRandom() % 16;
-  if (pick == 0) {
-    companionAction = CompanionAction::Surprise;
-    companionActionDuration = 900;
-  } else if (pick == 1) {
-    companionAction = CompanionAction::Sad;
-    companionActionDuration = 1100;
-  } else {
-    switch (companionRandom() % 5) {
-      case 0: companionAction = CompanionAction::Blink; companionActionDuration = 460; break;
-      case 1: companionAction = CompanionAction::DoubleBlink; companionActionDuration = 900; break;
-      case 2: companionAction = CompanionAction::Glance; companionActionDuration = 1700; break;
-      case 3: companionAction = CompanionAction::Happy; companionActionDuration = 1000; break;
-      default: companionAction = CompanionAction::Pause; companionActionDuration = 1800; break;
+  const uint32_t pick = companionRandom() % 100;
+  if (pick < 30) {
+    companionAction = CompanionAction::Glance;
+    companionActionDuration = companionBetween(2800, 4200);
+  } else if (pick < 50) {
+    companionAction = CompanionAction::Blink;
+    companionActionDuration = companionBetween(210, 250);
+  } else if (pick < 60) {
+    companionAction = CompanionAction::DoubleBlink;
+    companionActionDuration = companionBetween(470, 530);
+  } else if (pick < 72) {
+    companionAction = CompanionAction::Happy;
+    companionActionDuration = companionBetween(900, 1500);
+  } else if (pick < 88) {
+    companionAction = CompanionAction::Curious;
+    companionActionDuration = companionBetween(1600, 2800);
+    switch (companionRandom() % 3) {
+      case 0: companionCuriousGazeX = -0.55f; companionCuriousGazeY = -0.25f; break;
+      case 1: companionCuriousGazeX = 0.55f; companionCuriousGazeY = -0.25f; break;
+      default: companionCuriousGazeX = 0; companionCuriousGazeY = -0.8f; break;
     }
+  } else if (pick < 94) {
+    companionAction = CompanionAction::Pause;
+    companionActionDuration = companionBetween(1200, 2400);
+  } else if (pick < 98) {
+    companionAction = CompanionAction::Surprise;
+    companionActionDuration = companionBetween(900, 1500);
+  } else {
+    companionAction = CompanionAction::Sad;
+    companionActionDuration = companionBetween(1100, 1700);
   }
   companionActionStarted = now;
 }
@@ -140,12 +149,12 @@ void tickCompanion(uint32_t now) {
     if (elapsed >= companionActiveDuration) {
       companionMood = CompanionMood::Tired;
       companionMoodStarted = now;
-      companionTiredDuration = companionBetween(5000, 8500);
+      companionTiredDuration = companionBetween(5000, 9000);
       companionAction = CompanionAction::None;
     } else if (companionAction != CompanionAction::None &&
                now - companionActionStarted >= companionActionDuration) {
       companionAction = CompanionAction::None;
-      companionNextAction = now + companionBetween(1200, 3600);
+      companionNextAction = now + companionBetween(4000, 11000);
     } else if (companionAction == CompanionAction::None &&
                static_cast<int32_t>(now - companionNextAction) >= 0) {
       startCompanionAction(now);
@@ -153,32 +162,53 @@ void tickCompanion(uint32_t now) {
   } else if (companionMood == CompanionMood::Tired && elapsed >= companionTiredDuration) {
     companionMood = CompanionMood::Sleeping;
     companionMoodStarted = now;
-    companionSleepingDuration = companionBetween(14000, 26000);
+    companionSleepingDuration = companionBetween(12000, 24000);
   } else if (companionMood == CompanionMood::Sleeping && elapsed >= companionSleepingDuration) {
     companionMood = CompanionMood::Waking;
     companionMoodStarted = now;
-  } else if (companionMood == CompanionMood::Waking && elapsed >= 1200) {
+  } else if (companionMood == CompanionMood::Waking && elapsed >= kCompanionWakeMs) {
     companionMood = CompanionMood::Active;
     companionMoodStarted = now;
-    companionActiveDuration = companionBetween(45000, 85000);
+    companionActiveDuration = companionBetween(180000, 360000);
     companionAction = CompanionAction::None;
-    companionNextAction = now + companionBetween(900, 2500);
+    companionNextAction = now + companionBetween(2500, 6000);
   }
+}
+
+bool companionNeedsFrame(uint32_t now) {
+  if (!companionPoseValid || companionTransitioning ||
+      companionMood == CompanionMood::Uninitialized || companionMood == CompanionMood::Waking)
+    return true;
+  const uint32_t moodElapsed = now - companionMoodStarted;
+  if (companionMood == CompanionMood::Active) {
+    if (moodElapsed >= companionActiveDuration) return true;
+    if (companionAction == CompanionAction::None)
+      return static_cast<int32_t>(now - companionNextAction) >= 0;
+    if (now - companionActionStarted >= companionActionDuration) return true;
+    return companionAction == CompanionAction::Blink ||
+        companionAction == CompanionAction::DoubleBlink ||
+        companionAction == CompanionAction::Glance ||
+        companionAction == CompanionAction::Happy;
+  }
+  if (companionMood == CompanionMood::Tired) return moodElapsed >= companionTiredDuration;
+  if (companionMood == CompanionMood::Sleeping) return moodElapsed >= companionSleepingDuration;
+  return false;
 }
 
 float ease(float t) { return t * t * (3.0f - 2.0f * t); }
 
 float blinkAt(uint32_t elapsed, uint32_t start) {
   const uint32_t t = elapsed - start;
-  if (t >= 360) return 0;
-  if (t < 130) return ease(static_cast<float>(t) / 130.0f);
-  if (t < 170) return 1;
-  return 1.0f - ease(static_cast<float>(t - 170) / 190.0f);
+  if (t >= 210) return 0;
+  if (t < 70) return ease(static_cast<float>(t) / 70.0f);
+  if (t < 90) return 1;
+  return 1.0f - ease(static_cast<float>(t - 90) / 120.0f);
 }
 
 bool samePose(const CompanionPose& a, const CompanionPose& b) {
   return a.leftOpen == b.leftOpen && a.rightOpen == b.rightOpen &&
       a.gazeX == b.gazeX && a.gazeY == b.gazeY && a.bounce == b.bounce &&
+      a.eyeShiftX == b.eyeShiftX && a.eyeShiftY == b.eyeShiftY &&
       a.smile == b.smile && a.mouthOpen == b.mouthOpen && a.closedStyle == b.closedStyle &&
       a.leftBrowLength == b.leftBrowLength && a.leftBrowY0 == b.leftBrowY0 &&
       a.leftBrowY1 == b.leftBrowY1 && a.rightBrowLength == b.rightBrowLength &&
@@ -193,6 +223,8 @@ CompanionPose interpolatePose(const CompanionPose& from, const CompanionPose& to
   result.rightOpen = mix(from.rightOpen, to.rightOpen, amount);
   result.gazeX = mix(from.gazeX, to.gazeX, amount);
   result.gazeY = mix(from.gazeY, to.gazeY, amount);
+  result.eyeShiftX = mix(from.eyeShiftX, to.eyeShiftX, amount);
+  result.eyeShiftY = mix(from.eyeShiftY, to.eyeShiftY, amount);
   result.bounce = mix(from.bounce, to.bounce, amount);
   result.smile = mix(from.smile, to.smile, amount);
   result.mouthOpen = mix(from.mouthOpen, to.mouthOpen, amount);
@@ -272,8 +304,9 @@ void drawFaceExpression(const CompanionPose& pose) {
   if (companionFaceBuffered) companionFace.fillSprite(classicBackground);
   else tft.fillRect(kCompanionFaceX, kCompanionFaceY,
                     kCompanionFaceWidth, kCompanionFaceHeight, classicBackground);
-  const int leftX = ox + 30, rightX = ox + 110;
-  const int leftY = oy + 30 + lroundf(pose.bounce);
+  const int eyeShiftX = lroundf(pose.eyeShiftX);
+  const int leftX = ox + 30 + eyeShiftX, rightX = ox + 110 + eyeShiftX;
+  const int leftY = oy + 30 + lroundf(pose.eyeShiftY + pose.bounce);
   const int rightY = leftY;
   drawFaceBrow(target, leftX, leftY, pose.leftBrowLength, pose.leftBrowY0, pose.leftBrowY1);
   drawFaceBrow(target, rightX, rightY, pose.rightBrowLength, pose.rightBrowY0, pose.rightBrowY1);
@@ -301,26 +334,58 @@ void drawCompanion(uint32_t now) {
     openness = rightOpenness = 0.0f;
     smile = 2.0f;
   } else if (waking) {
-    const float t = fminf(1.0f, static_cast<float>(now - companionMoodStarted) / 1200.0f);
-    openness = rightOpenness = 0.08f + 1.07f * ease(t);
-    bounce = lroundf(-4.0f * sinf(t * 3.14159265f));
-    smile = 7.0f * ease(t);
-    leftBrowLength = rightBrowLength = 24.0f;
-    leftBrowY0 = leftBrowY1 = rightBrowY0 = rightBrowY1 = -26.0f;
+    const uint32_t wakeElapsed = now - companionMoodStarted;
+    const float wakeT = fminf(1.0f, static_cast<float>(wakeElapsed) / kCompanionWakeMs);
+    bounce = lroundf(-4.0f * sinf(wakeT * 3.14159265f));
+    if (wakeElapsed < 300) {
+      openness = rightOpenness = 1.12f;
+      mouthOpen = 75.0f;
+      smile = 0;
+      leftBrowLength = rightBrowLength = 24.0f;
+      leftBrowY0 = leftBrowY1 = rightBrowY0 = rightBrowY1 = -26.0f;
+    } else if (wakeElapsed < 510) {
+      const uint32_t blinkElapsed = wakeElapsed - 300;
+      const float settle = ease(fminf(1.0f, static_cast<float>(blinkElapsed) / 210.0f));
+      openness = rightOpenness = 1.12f * (1.0f - blinkAt(blinkElapsed, 0));
+      mouthOpen = 75.0f * (1.0f - settle);
+      smile = 7.0f * settle;
+      leftBrowLength = rightBrowLength = 24.0f * (1.0f - settle);
+      leftBrowY0 = leftBrowY1 = rightBrowY0 = rightBrowY1 = -26.0f;
+    } else {
+      const float settle = ease(fminf(1.0f,
+          static_cast<float>(wakeElapsed - 510) / (kCompanionWakeMs - 510)));
+      openness = rightOpenness = mix(1.12f, 1.0f, settle);
+      smile = 7.0f * settle;
+      leftBrowLength = rightBrowLength = 24.0f * (1.0f - settle);
+      leftBrowY0 = leftBrowY1 = rightBrowY0 = rightBrowY1 = -26.0f;
+    }
   } else if (companionAction != CompanionAction::None) {
     const float t = fminf(1.0f, static_cast<float>(elapsed) / companionActionDuration);
     if (companionAction == CompanionAction::Blink) {
       openness = rightOpenness = 1.0f - blinkAt(elapsed, 0);
     } else if (companionAction == CompanionAction::DoubleBlink) {
-      openness = rightOpenness = 1.0f - fmaxf(blinkAt(elapsed, 0), blinkAt(elapsed, 440));
+      openness = rightOpenness = 1.0f - fmaxf(blinkAt(elapsed, 0), blinkAt(elapsed, 260));
     } else if (companionAction == CompanionAction::Glance) {
-      if (t < 0.25f) gazeX = -ease(t / 0.25f);
-      else if (t < 0.50f) gazeX = -1.0f + 2.0f * ease((t - 0.25f) / 0.25f);
-      else if (t < 0.75f) { gazeX = 1.0f - ease((t - 0.50f) / 0.25f); gazeY = -ease((t - 0.50f) / 0.25f); }
-      else { gazeX = 0; gazeY = -1.0f + ease((t - 0.75f) / 0.25f); }
+      if (t < 0.18f) gazeX = -ease(t / 0.18f);
+      else if (t < 0.28f) gazeX = -1.0f;
+      else if (t < 0.48f) gazeX = -1.0f + 2.0f * ease((t - 0.28f) / 0.20f);
+      else if (t < 0.58f) gazeX = 1.0f;
+      else if (t < 0.72f) {
+        const float lookUp = ease((t - 0.58f) / 0.14f);
+        gazeX = 1.0f - lookUp;
+        gazeY = -lookUp;
+      } else if (t < 0.84f) gazeY = -1.0f;
+      else gazeY = -1.0f + ease((t - 0.84f) / 0.16f);
     } else if (companionAction == CompanionAction::Happy) {
       bounce = lroundf(-3.0f * sinf(t * 3.14159265f));
       smile = 7.0f + 2.0f * sinf(t * 3.14159265f);
+    } else if (companionAction == CompanionAction::Curious) {
+      gazeX = companionCuriousGazeX;
+      gazeY = companionCuriousGazeY;
+      smile = 5.0f;
+      leftBrowLength = rightBrowLength = 20.0f;
+      leftBrowY0 = -27.0f; leftBrowY1 = -30.0f;
+      rightBrowY0 = -30.0f; rightBrowY1 = -27.0f;
     } else if (companionAction == CompanionAction::Surprise) {
       openness = rightOpenness = 1.12f;
       mouthOpen = 100.0f;
@@ -346,6 +411,8 @@ void drawCompanion(uint32_t now) {
   target.rightOpen = fmaxf(0.0f, fminf(115.0f, rightOpenness * 100.0f));
   target.gazeX = gazeX * 7.0f;
   target.gazeY = gazeY * 5.0f;
+  target.eyeShiftX = fmaxf(-6.0f, fminf(6.0f, gazeX * 6.0f));
+  target.eyeShiftY = fmaxf(-3.0f, fminf(3.0f, gazeY * 3.0f));
   target.bounce = bounce;
   target.smile = smile;
   target.mouthOpen = mouthOpen;
@@ -364,6 +431,7 @@ void drawCompanion(uint32_t now) {
   else if (companionAction == CompanionAction::Surprise) expressionKey = 1;
   else if (companionAction == CompanionAction::Sad) expressionKey = 2;
   else if (companionAction == CompanionAction::Pause) expressionKey = 3;
+  else if (companionAction == CompanionAction::Curious) expressionKey = 7;
 
   CompanionPose pose = target;
   if (!companionPoseValid) {
@@ -374,15 +442,18 @@ void drawCompanion(uint32_t now) {
       companionTransitionFrom = lastCompanionPose;
       companionExpressionKey = expressionKey;
       companionTransitionStarted = now;
+      companionTransitionDuration = companionAction == CompanionAction::Blink ||
+          companionAction == CompanionAction::DoubleBlink ? companionBetween(150, 250) :
+          companionBetween(300, 600);
       companionTransitioning = true;
     }
     if (companionTransitioning) {
       const uint32_t duration = now - companionTransitionStarted;
-      if (duration >= kCompanionTransitionMs) {
+      if (duration >= companionTransitionDuration) {
         companionTransitioning = false;
       } else {
         pose = interpolatePose(companionTransitionFrom, target,
-            static_cast<float>(duration) / kCompanionTransitionMs);
+            ease(static_cast<float>(duration) / companionTransitionDuration));
       }
     }
     if (samePose(pose, lastCompanionPose)) return;
@@ -392,99 +463,6 @@ void drawCompanion(uint32_t now) {
   lastCompanionPose = pose;
   companionPoseValid = true;
   lastCompanionRender = now;
-}
-
-void drawClockFace() {
-  for (int hour = 0; hour < 12; ++hour) {
-    const float angle = (hour * 30.0f - 90.0f) * 0.01745329252f;
-    const int outer = kClockRadius;
-    const int inner = outer - (hour % 3 == 0 ? 8 : 4);
-    const uint16_t color = hour % 3 == 0 ? clockCyan : clockTrack;
-    tft.drawWideLine(lroundf(kClockCenterX + cosf(angle) * inner),
-                     lroundf(kClockCenterY + sinf(angle) * inner),
-                     lroundf(kClockCenterX + cosf(angle) * outer),
-                     lroundf(kClockCenterY + sinf(angle) * outer),
-                     hour % 3 == 0 ? 2.5f : 1.5f, color);
-  }
-}
-
-void clockPoint(float angle, int length, int& x, int& y) {
-  const float radians = (angle - 90.0f) * 0.01745329252f;
-  x = lroundf(kClockCenterX + cosf(radians) * length);
-  y = lroundf(kClockCenterY + sinf(radians) * length);
-}
-
-void clockHand(int x, int y, float width, uint16_t color) {
-  tft.drawWideLine(kClockCenterX, kClockCenterY, x, y, width, color);
-}
-
-void drawAnalogClock(time_t timestamp) {
-  if (!clockFaceDrawn) {
-    drawClockFace();
-    clockFaceDrawn = true;
-  }
-  if (timestamp < 1704067200) {
-    if (!clockWaitingDrawn) {
-      text("WAITING FOR TIME", kClockCenterX, kClockCenterY + 38, 160, 18,
-           &fonts::Font2, white);
-      clockWaitingDrawn = true;
-    }
-    return;
-  }
-
-  struct tm current{};
-  if (!localtime_r(&timestamp, &current)) return;
-  if (clockWaitingDrawn) {
-    text("", kClockCenterX, kClockCenterY + 38, 160, 18, &fonts::Font2, white);
-    clockWaitingDrawn = false;
-    clockLastSecond = -1;
-    clockLastMinute = -1;
-    clockLastDate = -1;
-    clockHandsDrawn = false;
-    clockTimeDrawn = false;
-  }
-  static const char* const weekdays[] = {"Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"};
-  static const char* const months[] = {"Jan", "Feb", "Mar", "Apr", "May", "Jun",
-      "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"};
-  char date[20], year[8];
-  snprintf(date, sizeof(date), "%s, %d %s", weekdays[current.tm_wday], current.tm_mday,
-           months[current.tm_mon]);
-  snprintf(year, sizeof(year), "%04d", current.tm_year + 1900);
-  const bool minuteChanged = current.tm_min != clockLastMinute || !clockHandsDrawn;
-  const bool secondChanged = current.tm_sec != clockLastSecond || !clockHandsDrawn;
-  if (current.tm_yday != clockLastDate || !clockTimeDrawn) {
-    tft.setTextSize(1);
-    text(date, kClockCenterX, kClockDateY, 150, 18, &fonts::FreeSans9pt7b, white);
-    text(year, kClockCenterX, kClockYearY, 64, 18, &fonts::FreeSans9pt7b, clockCyan);
-    clockLastDate = current.tm_yday;
-    clockTimeDrawn = true;
-  }
-  if (minuteChanged || secondChanged) {
-    if (clockHandsDrawn) {
-      if (minuteChanged) {
-        clockHand(clockHourX, clockHourY, 5.0f, classicBackground);
-        clockHand(clockMinuteX, clockMinuteY, 3.0f, classicBackground);
-      }
-      if (secondChanged) clockHand(clockSecondX, clockSecondY, 1.5f, classicBackground);
-    }
-    const float hourAngle = (current.tm_hour % 12) * 30.0f + current.tm_min * 0.5f;
-    const float minuteAngle = current.tm_min * 6.0f;
-    const float secondAngle = current.tm_sec * 6.0f;
-    if (minuteChanged) {
-      clockPoint(hourAngle, 39, clockHourX, clockHourY);
-      clockPoint(minuteAngle, 56, clockMinuteX, clockMinuteY);
-      clockHand(clockHourX, clockHourY, 5.0f, white);
-      clockHand(clockMinuteX, clockMinuteY, 3.0f, white);
-      clockLastMinute = current.tm_min;
-    }
-    if (secondChanged) {
-      clockPoint(secondAngle, 64, clockSecondX, clockSecondY);
-      clockHand(clockSecondX, clockSecondY, 1.5f, clockCyan);
-      clockLastSecond = current.tm_sec;
-    }
-    tft.fillCircle(kClockCenterX, kClockCenterY, 4, clockCyan);
-    clockHandsDrawn = true;
-  }
 }
 
 void heading(const char* value, bool classic, bool changedMode) {
@@ -540,13 +518,13 @@ void classicSideArc(bool weekly, float remaining, bool drawTrack = true) {
   };
   if (drawTrack) {
     arc(start, finish, classicBackground, 1);  // Clear fractional cap rounding at the edges.
-    arc(start, finish, weekly ? classicOrangeTrack : classicRedTrack);
+    arc(start, finish, weekly ? classicWeeklyTrack : classicSessionTrack);
   }
   if (remaining <= 0) return;
   const float sweep = kClassicArcSweep * fminf(remaining, 100.0f) / 100.0f;
   // Consumed usage stays faded at the top; remaining usage fills from the bottom.
-  if (weekly) arc(start, start + sweep, classicOrange);
-  else arc(finish - sweep, finish, classicRed);
+  if (weekly) arc(start, start + sweep, classicWeekly);
+  else arc(finish - sweep, finish, classicSession);
 }
 
 float classicStartupFraction(uint32_t now) {
@@ -675,8 +653,7 @@ void ui::begin() {
   if (prefs.begin("irozon-ui", false)) {
     const uint8_t saved = prefs.getUChar("mode", 0);
     selectedMode = saved == static_cast<uint8_t>(Mode::Classic) ? Mode::Classic :
-        saved == static_cast<uint8_t>(Mode::Companion) ? Mode::Companion :
-        saved == static_cast<uint8_t>(Mode::AnalogClock) ? Mode::AnalogClock : Mode::Green;
+        saved == static_cast<uint8_t>(Mode::Companion) ? Mode::Companion : Mode::Green;
     displayEnabled = prefs.getBool("power", true);
     if (prefs.isKey("heading")) displayHeading.assign(prefs.getString("heading", "").c_str());
     prefs.end();
@@ -694,22 +671,16 @@ ui::Mode ui::mode() { return selectedMode; }
 
 void ui::cycleMode() {
   selectMode(selectedMode == Mode::Green ? Mode::Classic :
-              selectedMode == Mode::Classic ? Mode::Companion :
-              selectedMode == Mode::Companion ? Mode::AnalogClock : Mode::Green);
+              selectedMode == Mode::Classic ? Mode::Companion : Mode::Green);
 }
 
 void ui::selectMode(Mode next) {
-  if ((next != Mode::Green && next != Mode::Classic && next != Mode::Companion &&
-       next != Mode::AnalogClock) ||
+  if ((next != Mode::Green && next != Mode::Classic && next != Mode::Companion) ||
       next == selectedMode) return;
   selectedMode = next;
   gaugeAnimating = false;
   classicAnimating = false;
   if (selectedMode == Mode::Companion) startCompanion(millis());
-  clockFaceDrawn = clockWaitingDrawn = clockTimeDrawn = clockHandsDrawn = false;
-  clockLastDate = -1;
-  clockLastSecond = clockLastMinute = -1;
-  lastClockPoll = 0;
   Preferences prefs;
   if (prefs.begin("irozon-ui", false)) {
     if (prefs.putUChar("mode", static_cast<uint8_t>(selectedMode)) != 1)
@@ -734,12 +705,6 @@ void ui::setDisplayOn(bool enabled) {
   }
   if (enabled) {
     paintedMode = 255;  // Redraw latest usage completely after waking.
-    if (selectedMode == Mode::AnalogClock) {
-      clockFaceDrawn = clockWaitingDrawn = clockTimeDrawn = clockHandsDrawn = false;
-      clockLastDate = -1;
-      clockLastSecond = clockLastMinute = -1;
-      lastClockPoll = 0;
-    }
   }
 }
 
@@ -781,8 +746,7 @@ void ui::draw(const usage::Snapshot& data, usage::Status status, uint32_t sample
     panelRecovering = true;
     return;
   }
-  // The local clock ticks each second; redraw only when visible minutes,
-  // integer percentages, availability, provenance or status actually change.
+  // Redraw only when integer percentages, availability, provenance or status change.
   const bool changedMode = paintedMode != static_cast<uint8_t>(selectedMode);
   const bool freshUsage = sampleRevision != usageRevision;
   const bool validUsage = (data.weekly.available && std::isfinite(data.weekly.remaining)) ||
@@ -819,7 +783,6 @@ void ui::draw(const usage::Snapshot& data, usage::Status status, uint32_t sample
   if (classicAvailabilityChanged) classicAnimating = false;
   const bool classic = selectedMode == Mode::Classic;
   const bool companion = selectedMode == Mode::Companion;
-  const bool analogClock = selectedMode == Mode::AnalogClock;
   char screenKey[128];
   static char previousKey[128] = "";
   snprintf(screenKey, sizeof(screenKey), "%d:%d:%u:%d:%d:%u:%d:%d:%s",
@@ -828,7 +791,7 @@ void ui::draw(const usage::Snapshot& data, usage::Status status, uint32_t sample
            data.session.available, static_cast<int>(floorf(data.session.remaining)),
            data.session.resetInSeconds / 60 + (data.session.resetInSeconds % 60 != 0),
            data.testData, static_cast<int>(status), companion ? displayHeading.text : "");
-  if (!changedMode && (!freshUsage || companion || analogClock) &&
+  if (!changedMode && (!freshUsage || companion) &&
       strcmp(screenKey, previousKey) == 0) return;
   snprintf(previousKey, sizeof(previousKey), "%s", screenKey);
   tft.startWrite();
@@ -841,7 +804,7 @@ void ui::draw(const usage::Snapshot& data, usage::Status status, uint32_t sample
       companionPoseValid = false;
     }
   }
-  if ((changedMode || headingChanged) && !analogClock && !companion)
+  if ((changedMode || headingChanged) && !companion)
     heading("Codex", classic, changedMode);
   const int week = data.weekly.available ? static_cast<int>(floorf(data.weekly.remaining)) : -1;
   const int session = data.session.available ? static_cast<int>(floorf(data.session.remaining)) : -1;
@@ -857,7 +820,6 @@ void ui::draw(const usage::Snapshot& data, usage::Status status, uint32_t sample
     lastSession = session;
   }
   if (companion) drawCompanion(millis());
-  if (analogClock) drawAnalogClock(time(nullptr));
   if (classic && (!classicAnimating || startClassic) &&
       (lastWeek != week || status != lastStatus || freshUsage || classicAvailabilityChanged)) {
     classicSideArc(true, classicAnimating ? 0 : data.weekly.available ? data.weekly.remaining : 0);
@@ -874,9 +836,9 @@ void ui::draw(const usage::Snapshot& data, usage::Status status, uint32_t sample
     tft.drawLine(120, kClassicDividerTop, 120, kClassicDividerBottom, classicTrack);
     if (!classicAnimating || startClassic) {
       classicPercentage(kClassicLeftX, classicAnimating ? 0 : data.weekly.remaining,
-                        data.weekly.available, classicOrange);
+                        data.weekly.available, classicWeekly);
       classicPercentage(kClassicRightX, classicAnimating ? 0 : data.session.remaining,
-                        data.session.available, classicRed);
+                        data.session.available, classicSession);
     }
     text("W", kClassicLeftX, kClassicLabelY, kClassicLabelWidth,
          kClassicLabelHeight, &fonts::FreeSansBold9pt7b, white);
@@ -905,22 +867,12 @@ void ui::draw(const usage::Snapshot& data, usage::Status status, uint32_t sample
 }
 
 void ui::animate() {
-  if (selectedMode == Mode::AnalogClock) {
-    if (!displayEnabled || panelSleeping || panelRecovering ||
-        paintedMode != static_cast<uint8_t>(Mode::AnalogClock)) return;
-    const uint32_t now = millis();
-    if (static_cast<uint32_t>(now - lastClockPoll) < 1000) return;
-    lastClockPoll = now;
-    tft.startWrite();
-    drawAnalogClock(time(nullptr));
-    tft.endWrite();
-    return;
-  }
   if (selectedMode == Mode::Companion) {
     if (!displayEnabled || panelSleeping || panelRecovering ||
         paintedMode != static_cast<uint8_t>(Mode::Companion)) return;
     const uint32_t now = millis();
-    if (static_cast<uint32_t>(now - lastCompanionFrame) < kCompanionFrameMs) return;
+    if (static_cast<uint32_t>(now - lastCompanionFrame) < kCompanionFrameMs ||
+        !companionNeedsFrame(now)) return;
     lastCompanionFrame = now;
     tft.startWrite();
     drawCompanion(now);
@@ -939,8 +891,8 @@ void ui::animate() {
     // Grow over existing tracks; restore the final raster to remove cap rounding remnants.
     classicSideArc(true, week, finished);
     classicSideArc(false, session, finished);
-    classicPercentage(kClassicLeftX, week, classicWeekAvailable, classicOrange);
-    classicPercentage(kClassicRightX, session, classicSessionAvailable, classicRed);
+    classicPercentage(kClassicLeftX, week, classicWeekAvailable, classicWeekly);
+    classicPercentage(kClassicRightX, session, classicSessionAvailable, classicSession);
     tft.endWrite();
     lastClassicFrame = now;
     if (finished) classicAnimating = false;

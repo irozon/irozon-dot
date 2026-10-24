@@ -107,11 +107,9 @@ esp_err_t handle(httpd_req_t* request) {
   }
   if (command == Command::State) {
     const char* modeKey = current.mode == ui::Mode::Classic ? "classic" :
-        current.mode == ui::Mode::Companion ? "companion" :
-        current.mode == ui::Mode::AnalogClock ? "analog" : "green";
+        current.mode == ui::Mode::Companion ? "companion" : "green";
     const char* modeName = current.mode == ui::Mode::Classic ? "Classic Split Arc" :
-        current.mode == ui::Mode::Companion ? "Companion" :
-        current.mode == ui::Mode::AnalogClock ? "Analog Clock" : "Stacked Numbers";
+        current.mode == ui::Mode::Companion ? "Companion" : "Stacked Numbers";
     char json[384];
     snprintf(json, sizeof(json),
         "{\"display_on\":%s,\"mode\":\"%s\",\"mode_name\":\"%s\","
@@ -149,7 +147,6 @@ void control::poll(bool connected, bool provisioning, usage::Status usageStatus)
     else if (command == Command::Green) ui::selectMode(ui::Mode::Green);
     else if (command == Command::Classic) ui::selectMode(ui::Mode::Classic);
     else if (command == Command::Companion) ui::selectMode(ui::Mode::Companion);
-    else if (command == Command::AnalogClock) ui::selectMode(ui::Mode::AnalogClock);
   }
   State next;
   next.on = ui::displayOn();

@@ -37,10 +37,12 @@ class StorageChecks(unittest.TestCase):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / 'local.json'
             raw = json.dumps({'bind': '192.168.1.10', 'esp32_ip': '192.168.1.20', 'port': 8787,
+                              'mode': 'analog',
                               'pairing_key': 'c' * 64})
             path.write_text(raw)
             value = settings.load(path)
             self.assertEqual(value['pairing_key'], 'c' * 64)
+            self.assertEqual(value['mode'], 'green')
             self.assertEqual(path.read_text(), raw)
 
     def test_validation_and_no_fake_provider(self):

@@ -65,8 +65,11 @@ def main():
             owner = launch()
             status, headers, body = wait_ready(owner)
             assert status == 200 and b'Irozon Dot' in body
-            for mode in (b'green', b'classic', b'companion', b'analog'):
+            assert body.count(b'class="mode-card"') == 3, 'Settings gallery must have exactly three modes'
+            assert b'<select id="mode"' not in body, 'Obsolete display dropdown is still packaged'
+            for mode in (b'green', b'classic', b'companion'):
                 assert b'data-mode="' + mode + b'"' in body, 'Missing packaged display card: ' + mode.decode()
+            assert b'data-mode="analog"' not in body
             for expression in (b'Happy', b'Curious', b'Surprised', b'Sad',
                                b'Sleepy', b'Sleeping', b'Waking'):
                 assert expression in body, 'Missing packaged Companion preview: ' + expression.decode()
