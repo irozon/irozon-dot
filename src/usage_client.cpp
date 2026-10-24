@@ -32,6 +32,7 @@ usage::Snapshot saved;
 uint64_t receivedAt = 0;
 uint32_t sourceAge = 0;
 bool haveSample = false, latestLive = false, lastFetchOk = false;
+uint32_t sampleRevision = 0;
 uint64_t secondsNow() { return esp_timer_get_time() / 1000000; }
 int hex(char c) {
   if (c >= '0' && c <= '9') return c - '0';
@@ -75,6 +76,8 @@ bool usage_client::configured() {
   uint8_t key[32];
   return strlen(pairedHost()) != 0 && decodeHex(pairedKey(), key, 32);
 }
+
+uint32_t usage_client::revision() { return sampleRevision; }
 
 void usage_client::fetch() {
   lastFetchOk = false;
@@ -121,6 +124,7 @@ void usage_client::fetch() {
   if (!parseWindow(doc["weekly"], serverTime, next.weekly) ||
       !parseWindow(doc["session"], serverTime, next.session)) return;
   saved = next;
+  ++sampleRevision;
   receivedAt = secondsNow();
   sourceAge = serverTime - sampledAt;
   haveSample = true;

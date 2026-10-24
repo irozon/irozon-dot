@@ -65,6 +65,11 @@ def main():
             owner = launch()
             status, headers, body = wait_ready(owner)
             assert status == 200 and b'Irozon Dot' in body
+            for mode in (b'green', b'classic', b'companion', b'analog'):
+                assert b'data-mode="' + mode + b'"' in body, 'Missing packaged display card: ' + mode.decode()
+            for expression in (b'Happy', b'Curious', b'Surprised', b'Sad',
+                               b'Sleepy', b'Sleeping', b'Waking'):
+                assert expression in body, 'Missing packaged Companion preview: ' + expression.decode()
             assert not config.exists(), 'First launch must not invent device pairing'
             assert request('GET', '/app.js')[0] == 200
             assert request('GET', '/style.css')[0] == 200

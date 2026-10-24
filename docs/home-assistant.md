@@ -1,6 +1,6 @@
 # Home Assistant (optional)
 
-Use the ready-made [package](../home-assistant/irozon-dot.example.yaml). It adds a display switch, a four-mode selector and an optional light follower.
+Use the ready-made [package](../home-assistant/irozon-dot.example.yaml). It adds a display switch, a selector for the four displays and an optional light follower.
 
 1. Finish [Windows setup](windows-installation.md).
 2. In the app's **Advanced settings**, click **Download private HA secret**. Keep the downloaded file private.

@@ -84,6 +84,8 @@ def main():
     if (ROOT / 'docs/windows-companion-distribution.md').exists():
         guide = (ROOT / 'docs/windows-companion-distribution.md').read_text(encoding='utf-8')
         (path.parent / 'README.md').write_text(guide, encoding='utf-8')
+    else:
+        shutil.copyfile(ROOT / 'README.md', path.parent / 'README.md')
     print('PASS: explicit package payload contains no private config, known personal keys or unrelated runtime DLLs')
     print('Executable:', manifest['bytes'], 'bytes;', round(manifest['bytes']/1048576, 2), 'MiB')
     print('SHA256:', manifest['sha256'])

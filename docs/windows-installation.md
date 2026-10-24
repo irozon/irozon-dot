@@ -6,6 +6,7 @@
 4. Connect the ESP32 to this PC with a data USB cable.
 5. In Dot's settings, click **Set up USB pairing**. Select the serial port. Tap RESET/EN, then click **Pair attached device** within 60 seconds. Already paired? Click **Use existing setup** or import the existing `local.json` in **Advanced settings**. Do not pair again.
 6. Connect Dot to Wi-Fi using the [first-boot steps](../README.md#flash-the-esp32). Click **Find device**. If it is not found, enter Dot's router IP under **Advanced settings** and click **Save connection details**. Click **Test connection**. Look for **Connected** and live usage.
-7. To start Dot when you sign in, check **Start automatically when I sign in**.
+7. Use the four preview cards to choose a display. The Companion expression previews are examples only. The saved device name appears in Companion mode.
+8. To start Dot when you sign in, check **Start automatically when I sign in**.
 
 The PC and Dot must be on the same private network. Keep the PC awake for live updates. For help, see [Troubleshooting](troubleshooting.md).

@@ -26,8 +26,8 @@ class HomeAssistantChecks(unittest.TestCase):
         routes = self.config['rest_command']
         for item in routes.values():
             self.assertEqual(item['method'], 'POST')
-        for name, slug in [('Green Dashboard','green'),('Blue Minimal','blue'),
-                           ('Orange Numbers','orange'),('Classic Rings','classic')]:
+        for name, slug in [('Stacked Numbers','green'),('Classic Split Arc','classic'),
+                           ('Companion','companion'),('Analog Clock','analog')]:
             url = self.env.from_string(routes['irozon_dot_mode']['url']).render(mode=name)
             self.assertEqual(url, 'http://192.168.1.20:8080/api/display/mode/'+slug)
 
@@ -41,7 +41,7 @@ class HomeAssistantChecks(unittest.TestCase):
             self.assertEqual(self.env.from_string(switch['state']).render(state_attr=lambda *a: on), on)
         select = self.config['template'][0]['select'][0]
         options = self.env.from_string(select['options']).render()
-        self.assertEqual(options, ['Green Dashboard','Blue Minimal','Orange Numbers','Classic Rings'])
+        self.assertEqual(options, ['Stacked Numbers','Classic Split Arc','Companion','Analog Clock'])
         for option in options:
             self.assertEqual(self.env.from_string(select['state']).render(state_attr=lambda *a: option), option)
 

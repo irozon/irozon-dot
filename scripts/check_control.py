@@ -48,7 +48,7 @@ def main():
         code, result = request('/api/state')
         assert code == 200, f'State HTTP {code}; verify source allowlist and firmware'
         assert isinstance(result['display_on'], bool)
-        assert result['mode'] in ('green', 'blue', 'orange', 'classic')
+        assert result['mode'] in ('green', 'classic', 'companion', 'analog')
         assert result['connection'] == 'connected'
         assert result['backlight_control'] is False and result['power_control'] == 'panel_sleep'
         expected = {'display_on', 'mode', 'mode_name', 'connection', 'usage_status',
@@ -79,7 +79,7 @@ def main():
     if args.exercise:
         try:
             command('/api/display/off', 'display_on', False)
-            for mode in ('green', 'blue', 'orange', 'classic'):
+            for mode in ('green', 'classic', 'companion', 'analog'):
                 command('/api/display/mode/'+mode, 'mode', mode)
                 assert state()['display_on'] is False
             command('/api/display/on', 'display_on', True)

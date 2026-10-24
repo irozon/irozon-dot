@@ -14,8 +14,8 @@ import subprocess
 import sys
 import tempfile
 
-MODES = {'green': 'Green Dashboard', 'blue': 'Blue Minimal',
-         'orange': 'Orange Numbers', 'classic': 'Classic Rings'}
+MODES = {'green': 'Stacked Numbers', 'classic': 'Classic Split Arc',
+         'companion': 'Companion', 'analog': 'Analog Clock'}
 HEADING_LIMIT = 18
 SECRET_KEYS = ('pairing_key', 'control_token')
 DEFAULTS = dict(bind='', esp32_ip='', port=8787, provider='codex', codex_path='',
@@ -57,7 +57,7 @@ def validate(value):
     if not isinstance(result['heading'], str) or not re.fullmatch(r'[A-Za-z0-9 ._-]{0,18}', result['heading']):
         raise ValueError('Heading: at most 18 ASCII letters, numbers, spaces, . _ -')
     if result['mode'] not in MODES:
-        raise ValueError('Unknown display mode')
+        result['mode'] = 'green'
     for key in SECRET_KEYS:
         if not isinstance(result[key], str) or (result[key] and not re.fullmatch('[0-9a-f]{64}', result[key])):
             raise ValueError('Keys must be 64 lowercase hexadecimal characters')

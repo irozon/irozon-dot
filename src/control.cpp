@@ -106,16 +106,19 @@ esp_err_t handle(httpd_req_t* request) {
     return ESP_FAIL;  // Close without reading an untrusted/unbounded body.
   }
   if (command == Command::State) {
-    const char* modes[] = {"green", "blue", "orange", "classic"};
-    const char* names[] = {"Green Dashboard", "Blue Minimal", "Orange Numbers", "Classic Rings"};
-    const unsigned mode = static_cast<unsigned>(current.mode);
+    const char* modeKey = current.mode == ui::Mode::Classic ? "classic" :
+        current.mode == ui::Mode::Companion ? "companion" :
+        current.mode == ui::Mode::AnalogClock ? "analog" : "green";
+    const char* modeName = current.mode == ui::Mode::Classic ? "Classic Split Arc" :
+        current.mode == ui::Mode::Companion ? "Companion" :
+        current.mode == ui::Mode::AnalogClock ? "Analog Clock" : "Stacked Numbers";
     char json[384];
     snprintf(json, sizeof(json),
         "{\"display_on\":%s,\"mode\":\"%s\",\"mode_name\":\"%s\","
         "\"connection\":\"%s\",\"usage_status\":\"%s\","
         "\"backlight_control\":false,\"power_control\":\"panel_sleep\","
         "\"capabilities\":[\"heading\",\"usb_pairing\"]}",
-        current.on ? "true" : "false", modes[mode], names[mode],
+        current.on ? "true" : "false", modeKey, modeName,
         current.connected ? "connected" : "offline", usageName(current.usage));
     return reply(request, "200 OK", json);
   }
@@ -143,8 +146,10 @@ void control::poll(bool connected, bool provisioning, usage::Status usageStatus)
   Command command;
   for (int i = 0; commands && i < 4 && xQueueReceive(commands, &command, 0) == pdTRUE; ++i) {
     if (command == Command::On || command == Command::Off) ui::setDisplayOn(command == Command::On);
-    else if (command >= Command::Green && command <= Command::Classic)
-      ui::selectMode(static_cast<ui::Mode>(static_cast<int>(command) - static_cast<int>(Command::Green)));
+    else if (command == Command::Green) ui::selectMode(ui::Mode::Green);
+    else if (command == Command::Classic) ui::selectMode(ui::Mode::Classic);
+    else if (command == Command::Companion) ui::selectMode(ui::Mode::Companion);
+    else if (command == Command::AnalogClock) ui::selectMode(ui::Mode::AnalogClock);
   }
   State next;
   next.on = ui::displayOn();

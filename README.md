@@ -1,16 +1,14 @@
 # Irozon Dot
 
-Irozon Dot shows your Codex five-hour and weekly usage on a small round screen. A Windows app reads usage from the signed-in Codex CLI and sends it to the ESP32. It does not read or bundle your Codex credentials.
+Irozon Dot shows Codex five-hour and weekly usage on a small round screen. A Windows companion reads usage from the signed-in Codex CLI and sends it to an ESP32. It does not read or bundle Codex credentials.
 
-## Pictures
+## Displays
 
-| Green Dashboard | Blue Minimal |
-| --- | --- |
-| ![Green Dashboard](docs/mode-green.png) | ![Blue Minimal](docs/mode-blue.png) |
+| Stacked Numbers | Classic Split Arc | Companion | Analog Clock |
+| --- | --- | --- | --- |
+| ![Stacked Numbers](docs/mode-green.png) | ![Classic Split Arc](docs/mode-classic.png) | ![Companion](docs/mode-companion.png) | ![Analog Clock](docs/mode-analog.png) |
 
-| Orange Numbers | Classic Rings |
-| --- | --- |
-| ![Orange Numbers](docs/mode-orange.png) | ![Classic Rings](docs/mode-classic.png) |
+The usage displays show weekly and 5-hour remaining usage. Companion is an animated face with no network dependency. The clock syncs over Wi-Fi and uses Stockholm time.
 
 ## What you need
 
@@ -48,10 +46,10 @@ Install [PlatformIO Core](https://docs.platformio.org/en/latest/core/installatio
 ```powershell
 pio run -e supermini
 pio device list
-pio run -e supermini -t upload --upload-port COM7
+pio run -e supermini -t upload --upload-port COM3
 ```
 
-Replace `COM7` with your board's port. Do not erase flash; that removes saved Wi-Fi and display settings. On first boot, join `Irozon-Dot-Setup` and open `http://192.168.4.1`. Enter your 2.4 GHz Wi-Fi details. Keep setup to a trusted place; the temporary setup network has no password.
+Replace `COM3` with your board's port. Do not erase flash; that removes saved Wi-Fi and display settings. On first boot, join `Irozon-Dot-Setup` and open `http://192.168.4.1`. Enter your 2.4 GHz Wi-Fi details. Keep setup to a trusted place; the temporary setup network has no password.
 
 ## Download and run the Windows app
 
@@ -64,7 +62,7 @@ Follow [Home Assistant setup](docs/home-assistant.md) to add a display switch an
 ## Known limitations and credits
 
 - OFF blanks and sleeps the LCD controller. The seven-wire display has no backlight control, so its LEDs stay lit. No safe backlight modification is known for this display board.
-- BOOT tap cycles modes. Hold about 2 seconds to toggle display power. Hold about 8 seconds to clear Wi-Fi settings. To enter the bootloader, hold BOOT while tapping RESET/EN. Hardware tests confirmed BOOT standby and wake, Home Assistant power and mode controls, and all four layouts.
+- BOOT tap cycles the four displays. Hold about 2 seconds to toggle display power. Hold about 8 seconds to clear Wi-Fi settings. To enter the bootloader, hold BOOT while tapping RESET/EN. Hardware tests confirmed BOOT standby and wake, Home Assistant power and mode controls, and all four layouts.
 - The tested setup is ESP32-C3 Super Mini, 4 MB flash, GC9A01 display and Windows 11 x64. Other boards and systems are untested.
 - The original display adapter and hardware configuration are credited in [third-party notices](THIRD_PARTY_NOTICES.md). Keep those notices with copies. Firmware binary redistribution still has open license requirements; see [license notes](docs/licenses.md).
 

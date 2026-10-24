@@ -35,8 +35,8 @@ rest_command:
   irozon_dot_mode:
     url: >-
       http://192.168.1.20:8080/api/display/mode/{{
-        {'Green Dashboard':'green', 'Blue Minimal':'blue',
-         'Orange Numbers':'orange', 'Classic Rings':'classic'}[mode] }}
+        {'Stacked Numbers':'green', 'Classic Split Arc':'classic', 'Companion':'companion',
+         'Analog Clock':'analog'}[mode] }}
     method: POST
     headers:
       Authorization: !secret irozon_dot_authorization
@@ -69,7 +69,7 @@ template:
         icon: mdi:palette
         availability: "{{ is_state('sensor.irozon_dot_control', 'connected') }}"
         state: "{{ state_attr('sensor.irozon_dot_control', 'mode_name') }}"
-        options: "{{ ['Green Dashboard', 'Blue Minimal', 'Orange Numbers', 'Classic Rings'] }}"
+        options: "{{ ['Stacked Numbers', 'Classic Split Arc', 'Companion', 'Analog Clock'] }}"
         select_option:
           - action: rest_command.irozon_dot_mode
             data:

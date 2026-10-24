@@ -35,9 +35,12 @@ function render(state, fill = false) {
   $('config-path').textContent = `Settings: ${state.config_path} · Logs: logs/companion.log beside settings.`;
   $('device-state').textContent = state.device ? `Authenticated device · ${state.device.usage_status} usage · ${state.device.mode_name}` : state.connection_message;
   $('power').disabled = !state.device || state.connection !== 'connected';
-  $('mode').disabled = state.connection !== 'connected';
+  const modeCards = [...document.querySelectorAll('.mode-card')];
+  for (const card of modeCards) {
+    card.disabled = state.connection !== 'connected';
+    card.setAttribute('aria-pressed', String(Boolean(state.device && state.device.mode === card.dataset.mode)));
+  }
   $('power').textContent = state.device ? state.device.display_on ? 'Put display in standby' : 'Wake display' : 'Display unavailable';
-  if (state.device) $('mode').value = state.device.mode;
   $('reuse').hidden = state.connection === 'connected' || !state.legacy_candidates.length;
   if (fill) {
     for (const key of ['bind','esp32_ip','codex_path']) $(key).value = state.config[key];
@@ -71,8 +74,15 @@ $('settings-form').onsubmit = event => {event.preventDefault(); task(event.submi
   const result = await call('/api/save', Object.fromEntries(new FormData(event.target)));
   $('pairing_key').value = ''; $('control_token').value = ''; await refresh(true); notice(result.message);
 });};
-$('mode').onchange = event => task(event.target, async () => {
-  notice('Waiting for Dot to confirm…'); const result = await call('/api/display',{mode:event.target.value}); await refresh(); notice(result.message);
+for (const card of document.querySelectorAll('.mode-card')) card.onclick = event => task(card, async () => {
+  $('mode-status').textContent = 'Waiting for Dot to confirm…';
+  try {
+    const result = await call('/api/display',{mode:card.dataset.mode});
+    await refresh(); $('mode-status').textContent = result.message;
+  } catch (error) {
+    $('mode-status').textContent = error.message || 'Could not change display mode.';
+    throw error;
+  }
 });
 $('power').onclick = event => task(event.target, async () => {
   if (!current.device) return; const result = await call('/api/display',{on:!current.device.display_on}); await refresh(); notice(result.message);
@@ -123,7 +133,9 @@ function unavailable() {
   $('connection-badge').textContent = 'Disconnected'; $('connection-badge').dataset.state = 'disconnected';
   $('connection-message').textContent = 'The Windows companion is not reachable.';
   $('provider-status').textContent = 'Usage synchronization is paused.';
-  $('usage').classList.add('stale'); $('mode').disabled = true; $('power').disabled = true;
+  $('usage').classList.add('stale');
+  document.querySelectorAll('.mode-card').forEach(card => { card.disabled = true; card.setAttribute('aria-pressed', 'false'); });
+  $('power').disabled = true;
   notice('Waiting for the companion to return. This page reconnects automatically.',true);
 }
 refresh(true).catch(unavailable);
